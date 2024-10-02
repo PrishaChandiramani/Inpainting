@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import image
+from scipy import *
 
 def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size):
     confidence = 0
@@ -23,6 +24,7 @@ def show_image(im, title): # pour afficher une image
     plt.title(title)
     plt.show()
 
+'''
 target_region_mask = np.array([[i <= j for i in range(image_size)] for j in range(image_size)])
 confidence_matrix = 1. - np.copy(target_region_mask)
 patch_size = 5
@@ -45,3 +47,11 @@ def update_confidence(confidence_matrix, image_size, target_region_mask, patch_s
 #show_image(confidence_matrix, 'matrice de confiance initiale')
 #confidence_matrix = update_confidence(confidence_matrix, image_size, target_region_mask, patch_size)
 #show_image(confidence_matrix, 'matrice de confiance après une étape')
+'''
+
+def gradient(img):
+    gradient_matrix = np.zeros()
+    
+    return gradient_matrix
+
+gradient(im)
