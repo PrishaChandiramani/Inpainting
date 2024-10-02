@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import image
+from PIL import Image, ImageOps
 from scipy import signal
+import os
 
 def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size):
     confidence = 0
@@ -15,16 +16,15 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     return confidence
 
 #im = np.sqrt(np.random.rand(10, 10))
-im = image.imread('./circle.png')
-im = im[:, :, 0]
-image_size = im.shape[0]
 
-def show_image(im, title): # pour afficher une image
-    plt.imshow(im, cmap='grey')
-    plt.title(title)
-    plt.show()
+img = Image.open('./Inpainting/circle.png')
+img_array = np.array(ImageOps.grayscale(img))
+print(img_array.shape)
+image_size = img.size[0]
 
-'''
+#print(img_array)
+
+"""
 target_region_mask = np.array([[i <= j for i in range(image_size)] for j in range(image_size)])
 confidence_matrix = 1. - np.copy(target_region_mask)
 patch_size = 5
@@ -47,18 +47,37 @@ def update_confidence(confidence_matrix, image_size, target_region_mask, patch_s
 #show_image(confidence_matrix, 'matrice de confiance initiale')
 #confidence_matrix = update_confidence(confidence_matrix, image_size, target_region_mask, patch_size)
 #show_image(confidence_matrix, 'matrice de confiance après une étape')
-'''
+"""
+def show_image(im, title): # pour afficher une image
+    plt.imshow(im, cmap='grey')
+    plt.title(title)
+    plt.show()
 
 def compute_gradient(img):
-    gradient_matrix = np.zeros((img.shape(0), img.shape(1), 2))
+    # calcule le gradient d'une image en niveau de gris
+    gradient_matrix = np.zeros((img.shape[0], img.shape[1], 2))
     gradient_core_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
     gradient_core_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
-    gradient_matrix[:, :, 0] = signal.convolve2d(img, gradient_core_x, mode='same', boundary='fill')
-    gradient_matrix[:, :, 1] = signal.convolve2d(img, gradient_core_y, mode='same', boundary='fill')
+    gradient_matrix[:, :, 0] = signal.convolve2d(img, gradient_core_x, mode='same', boundary='wrap')
+    gradient_matrix[:, :, 1] = signal.convolve2d(img, gradient_core_y, mode='same', boundary='wrap')
     
-    return gradient_matrix
+    return np.abs(gradient_matrix)
 
-gradient = compute_gradient(im)
+gradient = compute_gradient(img_array)
 
-show_image(gradient[0])
-show_image(gradient[1])
+def show_gradient(img):
+    # calcule et affiche les vecteurs gradients d'une image en niveau de gris
+    grad = compute_gradient(img)
+    gradx, grady = grad[:, :, 0], grad[:, :, 1]
+    X = np.arange(img.shape[0])
+    Y = np.arange(img.shape[1])
+    X, Y = np.meshgrid(X, Y)
+
+    fig, ax = plt.subplots()
+    q = ax.quiver(X, Y, gradx, grady)
+
+    plt.show()
+
+#show_image(gradient[:, :, 0], "gradient en x")
+#show_image(gradient[:, :, 1], "gradient en y")
+show_gradient(img_array)
