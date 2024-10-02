@@ -15,7 +15,7 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     return confidence
 
 #im = np.sqrt(np.random.rand(10, 10))
-im = image.imread('circle.png')
+im = image.imread('./circle.png')
 im = im[:, :, 0]
 image_size = im.shape[0]
 
@@ -58,7 +58,7 @@ def compute_gradient(img):
     
     return gradient_matrix
 
-gradient = gradient(im)
+gradient = compute_gradient(im)
 
 show_image(gradient[0])
 show_image(gradient[1])
