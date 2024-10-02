@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import image
-from scipy import *
+from scipy import signal
 
 def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size):
     confidence = 0
@@ -49,9 +49,16 @@ def update_confidence(confidence_matrix, image_size, target_region_mask, patch_s
 #show_image(confidence_matrix, 'matrice de confiance après une étape')
 '''
 
-def gradient(img):
-    gradient_matrix = np.zeros()
+def compute_gradient(img):
+    gradient_matrix = np.zeros((img.shape(0), img.shape(1), 2))
+    gradient_core_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+    gradient_core_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+    gradient_matrix[:, :, 0] = signal.convolve2d(img, gradient_core_x, mode='same', boundary='fill')
+    gradient_matrix[:, :, 1] = signal.convolve2d(img, gradient_core_y, mode='same', boundary='fill')
     
     return gradient_matrix
 
-gradient(im)
+gradient = gradient(im)
+
+show_image(gradient[0])
+show_image(gradient[1])
