@@ -18,7 +18,7 @@ im = image.imread('circle.png')
 im = im[:, :, 0]
 image_size = im.shape[0]
 
-def show_image(im, title):
+def show_image(im, title): # pour afficher une image
     plt.imshow(im, cmap='grey')
     plt.title(title)
     plt.show()
