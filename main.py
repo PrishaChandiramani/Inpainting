@@ -56,8 +56,8 @@ def show_image(im, title): # pour afficher une image
 def compute_gradient(img):
     # calcule le gradient d'une image en niveau de gris
     gradient_matrix = np.zeros((img.shape[0], img.shape[1], 2))
-    gradient_core_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-    gradient_core_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+    gradient_core_x = 1/4 * np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+    gradient_core_y = 1/4 * np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
     gradient_matrix[:, :, 0] = signal.convolve2d(img, gradient_core_x, mode='same', boundary='wrap')
     gradient_matrix[:, :, 1] = signal.convolve2d(img, gradient_core_y, mode='same', boundary='wrap')
     
@@ -74,6 +74,7 @@ def show_gradient(img):
     X, Y = np.meshgrid(X, Y)
 
     fig, ax = plt.subplots()
+    fig.set_size_inches(6, 6)
     q = ax.quiver(X, Y, gradx, grady)
 
     plt.show()
