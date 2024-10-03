@@ -65,10 +65,19 @@ def choose_q(target_region_mask, p, im):
 
 target_region_mask = np.array([[False for i in range(61)] for j in range(61)])
 target_region_mask[12:48,12:48] = True 
-p1 = gray_image_matrix[12:21,12:21] # patch 9
+
+test = gray_image_matrix.copy()
+
+test[12:48,12:48] = None
+test_image = Image.fromarray(test)
+test_image.show()
+
+
+
+p1 = test[8:17,8:17] # patch 9
 p1_image = Image.fromarray(p1)
 p1_image.show()
-p2 = gray_image_matrix[30:39,30:39] # patch 9
+p2 = test[44:53,44:53] # patch 9
 p2_image = Image.fromarray(p2)
 p2_image.show()
 
@@ -83,7 +92,7 @@ D = choose_q(target_region_mask, p1, gray_image_matrix)
 #print(m_matrix)
 #print(m_matrix.shape)
 print(p1)
-new_matrix[12:21,12:21] = D
+new_matrix[8:17,8:17] = D
 
 D2 = choose_q(target_region_mask, p2, gray_image_matrix)
 m2 = min(D2, key=D2.get) # renvoie la clé de la valeur minimale
@@ -93,6 +102,6 @@ m2 = min(D2, key=D2.get) # renvoie la clé de la valeur minimale
 #print(m2_matrix)
 #print(m2_matrix.shape)
 print(p2)
-new_matrix[30:39,30:39] = D2
+new_matrix[44:53,44:53] = D2
 new_matrix_image = Image.fromarray(new_matrix)
 new_matrix_image.show()
