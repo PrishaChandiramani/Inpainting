@@ -15,24 +15,6 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     confidence /= patch_size*patch_size
     return confidence
 
-#im = np.sqrt(np.random.rand(10, 10))
-
-img = Image.open('./Inpainting/circle.png')
-img_array = np.array(ImageOps.grayscale(img))
-print(img_array.shape)
-image_size = img.size[0]
-
-#print(img_array)
-
-"""
-target_region_mask = np.array([[i <= j for i in range(image_size)] for j in range(image_size)])
-confidence_matrix = 1. - np.copy(target_region_mask)
-patch_size = 5
-
-show_image(im, 'image originale')
-#show_image(np.ma.masked_array(im, target_region_mask), 'image avec une partie enlevée')
-#show_image(target_region_mask, 'région enlevée de l\'image originale')
-#show_image(confidence_matrix, 'matrice de confiance des pixels')
 
 def update_confidence(confidence_matrix, image_size, target_region_mask, patch_size):
     new_confidence_matrix = np.zeros((image_size, image_size))
@@ -44,33 +26,27 @@ def update_confidence(confidence_matrix, image_size, target_region_mask, patch_s
                 new_confidence_matrix[x, y] = confidence_matrix[x, y]
     return new_confidence_matrix
 
-#show_image(confidence_matrix, 'matrice de confiance initiale')
-#confidence_matrix = update_confidence(confidence_matrix, image_size, target_region_mask, patch_size)
-#show_image(confidence_matrix, 'matrice de confiance après une étape')
-"""
+
 def show_image(im, title): # pour afficher une image
     plt.imshow(im, cmap='grey')
     plt.title(title)
     plt.show()
 
-def compute_gradient(img):
+def compute_gradient(img, boundary_mode='wrap'):
     # calcule le gradient d'une image en niveau de gris
     gradient_matrix = np.zeros((img.shape[0], img.shape[1], 2))
     gradient_core_x = 1/4 * np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
     gradient_core_y = 1/4 * np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
-    gradient_matrix[:, :, 0] = signal.convolve2d(img, gradient_core_x, mode='same', boundary='wrap')
-    gradient_matrix[:, :, 1] = signal.convolve2d(img, gradient_core_y, mode='same', boundary='wrap')
+    gradient_matrix[:, :, 0] = signal.convolve2d(img, gradient_core_x, mode='same', boundary=boundary_mode)
+    gradient_matrix[:, :, 1] = signal.convolve2d(img, gradient_core_y, mode='same', boundary=boundary_mode)
     
-    return np.abs(gradient_matrix)
+    return gradient_matrix
 
-gradient = compute_gradient(img_array)
-
-def show_gradient(img):
+def show_gradient_vectors(grad_matrix):
     # calcule et affiche les vecteurs gradients d'une image en niveau de gris
-    grad = compute_gradient(img)
-    gradx, grady = grad[:, :, 0], grad[:, :, 1]
-    X = np.arange(img.shape[0])
-    Y = np.arange(img.shape[1])
+    gradx, grady = grad_matrix[:, :, 0], grad_matrix[:, :, 1]
+    X = np.arange(grad_matrix.shape[1])
+    Y = np.arange(grad_matrix.shape[0])
     X, Y = np.meshgrid(X, Y)
 
     fig, ax = plt.subplots()
@@ -79,6 +55,41 @@ def show_gradient(img):
 
     plt.show()
 
-#show_image(gradient[:, :, 0], "gradient en x")
-#show_image(gradient[:, :, 1], "gradient en y")
-show_gradient(img_array)
+def front_orthogonal_vectors(target_region_mask):
+    front_orthogonal_vectors = np.zeros((target_region_mask.shape[0], target_region_mask.shape[1], 2))
+    mask_gradient = compute_gradient(target_region_mask)
+    front_orthogonal_vectors = mask_gradient / np.max(np.abs(mask_gradient))
+    return front_orthogonal_vectors
+
+
+
+if __name__ == "__main__":
+
+    img = Image.open('./Inpainting/triangle.png')
+    img_array = np.array(ImageOps.grayscale(img))
+    image_size = img.size[0]
+
+    target_region_mask = np.array([[i <= j for i in range(image_size)] for j in range(image_size)])
+    confidence_matrix = 1. - np.copy(target_region_mask)
+    patch_size = 5
+
+    show_image(img_array, 'image originale')
+    #show_image(np.ma.masked_array(im, target_region_mask), 'image avec une partie enlevée')
+    show_image(target_region_mask, 'région enlevée de l\'image originale')
+    #show_image(confidence_matrix, 'matrice de confiance des pixels')
+
+    #show_image(confidence_matrix, 'matrice de confiance initiale')
+    #confidence_matrix = update_confidence(confidence_matrix, image_size, target_region_mask, patch_size)
+    #show_image(confidence_matrix, 'matrice de confiance après une étape')
+    
+    
+    mask_gradient = compute_gradient(target_region_mask, boundary_mode='symm')
+    gradient = compute_gradient(img_array)
+    show_image(gradient[:, :, 0], "gradient en x")
+    show_image(gradient[:, :, 1], "gradient en y")
+    
+    #show_image(mask_gradient[:, :, 0], "gradient en x")
+    #show_image(mask_gradient[:, :, 1], "gradient en y")
+    #show_gradient_vectors(img_array)
+
+    show_gradient_vectors(gradient)
