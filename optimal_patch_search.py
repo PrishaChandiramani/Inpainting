@@ -68,7 +68,7 @@ target_region_mask[12:48,12:48] = True
 
 test = gray_image_matrix.copy()
 
-test[12:48,12:48] = None
+test[12:48,12:48] = None # mauvais type, à voir comment changer ça
 test_image = Image.fromarray(test)
 test_image.show()
 
