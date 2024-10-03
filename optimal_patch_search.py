@@ -28,8 +28,13 @@ p_image = Image.fromarray(p)
 p_image.show()
 
 def calcul_dist(p,q):
-    d = np.sum((p-q)**2)
-    return d
+   # dans p, il peut y avoir des valeurs à None
+    sum = 0
+    for i in range(p.shape[0]):
+        for j in range(p.shape[1]):
+            if p[i,j] != None:
+             sum += (p[i,j]-q[i,j])**2   
+    return sum
 
 def choose_q(target_region_mask, p, im):
     D={}
