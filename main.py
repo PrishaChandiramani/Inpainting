@@ -16,14 +16,14 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     return confidence
 
 
-def update_confidence(confidence_matrix, image_size, target_region_mask, patch_size):
-    new_confidence_matrix = np.zeros((image_size, image_size))
-    for x in range(image_size):
-        for y in range(image_size):
-            if confidence_matrix[x, y] == 0:
-                new_confidence_matrix[x, y] = priority([x, y], target_region_mask, confidence_matrix, patch_size, image_size)
-            else:
-                new_confidence_matrix[x, y] = confidence_matrix[x, y]
+def update_confidence(confidence_matrix, target_region_mask, selected_pixel, patch_size):
+    new_confidence_matrix = np.copy(confidence_matrix)
+    selected_pixel_confidence = confidence_matrix[selected_pixel[0], selected_pixel[1]]
+    half_patch_size = patch_size // 2
+    for x in range(max(selected_pixel[0] - half_patch_size, 0), min(selected_pixel[0] + half_patch_size + 1, image_size - 1)):
+        for y in range(max(selected_pixel[1] - half_patch_size, 0), min(selected_pixel[1] + half_patch_size + 1, image_size - 1)):
+            if target_region_mask[x, y]:
+                new_confidence_matrix[x, y] = selected_pixel_confidence
     return new_confidence_matrix
 
 
