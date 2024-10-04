@@ -44,7 +44,7 @@ def compute_gradient(img, boundary_mode='wrap'):
 
 def show_gradient_vectors(grad_matrix):
     # calcule et affiche les vecteurs gradients d'une image en niveau de gris
-    gradx, grady = grad_matrix[:, :, 0], grad_matrix[:, :, 1]
+    gradx, grady = grad_matrix[:, :, 0], - grad_matrix[:, :, 1]
     X = np.arange(grad_matrix.shape[1])
     Y = np.arange(grad_matrix.shape[0])
     X, Y = np.meshgrid(X, Y)
@@ -52,7 +52,7 @@ def show_gradient_vectors(grad_matrix):
     fig, ax = plt.subplots()
     fig.set_size_inches(6, 6)
     q = ax.quiver(X, Y, gradx, grady)
-
+    ax.invert_yaxis()
     plt.show()
 
 def front_orthogonal_vectors(target_region_mask):
@@ -65,7 +65,7 @@ def front_orthogonal_vectors(target_region_mask):
 
 if __name__ == "__main__":
 
-    img = Image.open('./Inpainting/triangle.png')
+    img = Image.open('./Inpainting/circle.png')
     img_array = np.array(ImageOps.grayscale(img))
     image_size = img.size[0]
 
@@ -84,12 +84,12 @@ if __name__ == "__main__":
     
     
     mask_gradient = compute_gradient(target_region_mask, boundary_mode='symm')
-    gradient = compute_gradient(img_array)
-    show_image(gradient[:, :, 0], "gradient en x")
-    show_image(gradient[:, :, 1], "gradient en y")
+    #gradient = compute_gradient(img_array)
+    #show_image(gradient[:, :, 0], "gradient en x")
+    #show_image(gradient[:, :, 1], "gradient en y")
     
-    #show_image(mask_gradient[:, :, 0], "gradient en x")
-    #show_image(mask_gradient[:, :, 1], "gradient en y")
-    #show_gradient_vectors(img_array)
+    show_image(mask_gradient[:, :, 0], "gradient en x")
+    show_image(mask_gradient[:, :, 1], "gradient en y")
+    show_gradient_vectors(mask_gradient)
 
-    show_gradient_vectors(gradient)
+    #show_gradient_vectors(gradient)
