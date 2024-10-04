@@ -26,6 +26,15 @@ def update_confidence(confidence_matrix, target_region_mask, selected_pixel, pat
                 new_confidence_matrix[x, y] = selected_pixel_confidence
     return new_confidence_matrix
 
+def update_target_region_mask(target_region_mask, selected_pixel, patch_size):
+    new_target_region_mask = np.copy(target_region_mask)
+    half_patch_size = patch_size // 2
+    for x in range(max(selected_pixel[0] - half_patch_size, 0), min(selected_pixel[0] + half_patch_size + 1, image_size - 1)):
+        for y in range(max(selected_pixel[1] - half_patch_size, 0), min(selected_pixel[1] + half_patch_size + 1, image_size - 1)):
+            if target_region_mask[x, y]:
+                new_target_region_mask[x, y] = False
+    return new_target_region_mask
+
 
 def show_image(im, title): # pour afficher une image
     plt.imshow(im, cmap='grey')
