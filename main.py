@@ -60,7 +60,7 @@ def compute_gradient(img, boundary_mode='wrap'):
     return gradient_matrix
 
 def show_gradient_vectors(grad_matrix):
-    # calcule et affiche les vecteurs gradients d'une image en niveau de gris
+    # Affiche les vecteurs gradients d'une image en niveau de gris
     gradx, grady = grad_matrix[:, :, 0], - grad_matrix[:, :, 1]
     X = np.arange(grad_matrix.shape[1])
     Y = np.arange(grad_matrix.shape[0])
@@ -69,6 +69,13 @@ def show_gradient_vectors(grad_matrix):
     fig, ax = plt.subplots()
     fig.set_size_inches(6, 6)
     q = ax.quiver(X, Y, gradx, grady)
+    ax.invert_yaxis()
+    plt.show()
+
+def show_one_gradient_vector(pixel, gradient):
+    fig, ax = plt.subplots()
+    fig.set_size_inches(6, 6)
+    q = ax.quiver(pixel[0], pixel[1], gradient[0], - gradient[1])
     ax.invert_yaxis()
     plt.show()
 
@@ -88,7 +95,7 @@ def pixel_with_min_priority(front_pixels, image, target_region_mask, confidence_
         pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, gradient_matrix, orthogonal_vectors_matrix)
         if pixel_priority < min_priority:
             pixel_min = pixel
-            
+
     return pixel_min
 
 if __name__ == "__main__":
@@ -116,8 +123,9 @@ if __name__ == "__main__":
     #show_image(gradient[:, :, 0], "gradient en x")
     #show_image(gradient[:, :, 1], "gradient en y")
     
-    show_image(mask_gradient[:, :, 0], "gradient en x")
-    show_image(mask_gradient[:, :, 1], "gradient en y")
-    show_gradient_vectors(mask_gradient)
+    #show_image(mask_gradient[:, :, 0], "gradient en x")
+    #show_image(mask_gradient[:, :, 1], "gradient en y")
+    #show_gradient_vectors(mask_gradient)
+    show_one_gradient_vector([25, 25], mask_gradient[25, 25])
 
     #show_gradient_vectors(gradient)
