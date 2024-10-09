@@ -21,7 +21,7 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     data_term = np.abs(gradient_matrix[x, y, 0] * orthogonal_vectors_matrix[x, y, 0] + gradient_matrix[x, y, 1] * orthogonal_vectors_matrix[x, y, 1])
     data_term /= 255
 
-    return confidence*data_term
+    return confidence, confidence*data_term
 
 
 def update_confidence(confidence_matrix, target_region_mask, selected_pixel, patch_size):
@@ -85,18 +85,28 @@ def front_orthogonal_vectors(target_region_mask):
     front_orthogonal_vectors = mask_gradient / np.max(np.abs(mask_gradient))
     return front_orthogonal_vectors
 
-def pixel_with_min_priority(front_pixels, image, target_region_mask, confidence_matrix, image_size, patch_size):
+def pixel_with_min_priority(front_pixels_mask, image, target_region_mask, confidence_matrix, image_size, patch_size):
     orthogonal_vectors_matrix = front_orthogonal_vectors(target_region_mask)
     gradient_matrix = compute_gradient(image * (1. - target_region_mask))
-    pixel_min = front_pixels[0]
-    min_priority = 1
     
-    for pixel in front_pixels:
-        pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, gradient_matrix, orthogonal_vectors_matrix)
+    pixel_min_confidence = 0.
+    min_priority = 1.
+
+    front_pixels_list = []
+
+    for i in range(front_pixels_mask.shape[0]):
+        for j in range(front_pixels_mask.shape[1]):
+            if front_pixels_mask[i, j]:
+                front_pixels_list.append([i, j])
+    
+    pixel_min = front_pixels_list[0]
+    for pixel in front_pixels_list:
+        pixel_confidence, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, gradient_matrix, orthogonal_vectors_matrix)
         if pixel_priority < min_priority:
             pixel_min = pixel
+            pixel_min_confidence = pixel_confidence
 
-    return pixel_min
+    return pixel_min, pixel_min_confidence
 
 if __name__ == "__main__":
 
