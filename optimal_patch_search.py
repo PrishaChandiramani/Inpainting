@@ -1,7 +1,8 @@
 from PIL import Image
 import numpy as np
+import luciano_functions as lf
 
-image = Image.open("./images/a-b-c.ppm.png")
+image = Image.open("./images/a-b.ppm.png")
 
 image_matrix = np.array(image)
 
@@ -33,12 +34,12 @@ def calcul_dist(p,q, p_mask):
    # dans p, il peut y avoir des valeurs à None
    #p_mask[i,j] = True si il faut prendre la valeur du pixel dans p qu'elle n'est pas vide
    # si p_mask a que des valeurs à False, on ne fait rien, donc la distance est nulle, c'est à dire que le pixel q est parfait, problème à gérer, est qu'on commence à sum = -1 ?  
-    sum = 0
+    sum = 0.0
     if p.shape != q.shape:
         raise ValueError("Les deux patchs n'ont pas la même taille")
     for i in range(p.shape[0]):
         for j in range(p.shape[1]):
-            if p_mask[i,j] == True:
+            if p_mask[i,j]:
                  # Cast to float64 to prevent overflow
                 diff = float(p[i, j]) - float(q[i, j])
                 sum += diff ** 2
@@ -66,6 +67,7 @@ def choose_q(target_region_mask, p,p_mask,im, patch_size):
                 q = im[i:i+patch_size,j:j+patch_size]
                 d = calcul_dist(p,q,p_mask)
                 D[(i,j)]=d
+    #print(D)
     minimum_D = min(D, key=D.get) # renvoie la clé de la valeur minimale
     q_opt = im[minimum_D[0]:minimum_D[0]+patch_size,minimum_D[1]:minimum_D[1]+patch_size]
 
@@ -73,7 +75,7 @@ def choose_q(target_region_mask, p,p_mask,im, patch_size):
 
 ## Test
 
-target_region_mask = np.array([[False for i in range(61)] for j in range(61)])
+target_region_mask = np.array([[False for i in range(128)] for j in range(128)])
 target_region_mask[12:48,12:48] = True 
 print("target_region_shape: ",target_region_mask.shape)
 
@@ -82,8 +84,8 @@ print("target_region_shape: ",target_region_mask.shape)
 new_matrix = gray_image_matrix.copy()
 
 new_matrix_mask = new_matrix.copy()
-for i in range(61):
-    for j in range(61):
+for i in range(128):
+    for j in range(128):
         if target_region_mask[i,j] == True:
             new_matrix_mask[i,j] = 0
 
@@ -163,13 +165,15 @@ new_matrix_image.show()
 
 
 def update_target_region_mask(target_region_mask, selected_pixel, patch_size,im):
-    new_target_region_mask = np.copy(target_region_mask)
+    print("in update_target_region_mask")
     half_patch_size = patch_size // 2
+    target_region_mask[selected_pixel[0],selected_pixel[1]] = False
     for x in range(max(selected_pixel[0] - half_patch_size, 0), min(selected_pixel[0] + half_patch_size + 1, im.shape[0] - 1)):
         for y in range(max(selected_pixel[1] - half_patch_size, 0), min(selected_pixel[1] + half_patch_size + 1, im.shape[1] - 1)):
             if target_region_mask[x, y]:
-                new_target_region_mask[x, y] = False
-    return new_target_region_mask
+                target_region_mask[x, y] = False
+    print("new_target_region_mask",target_region_mask)
+    return True
 
 
 def patch_search_without_mask(target_region_mask, im, patch_size):
@@ -223,7 +227,7 @@ def patch_search(target_region_mask, im, patch_size):
     return new_matrix
 
 ## nouveaux tests
-target_region_mask2 = np.array([[False for i in range(61)] for j in range(61)])
+target_region_mask2 = np.array([[False for i in range(128)] for j in range(128)])
 target_region_mask2[16:44,16:44] = True 
 
 image_initiale_matrix = gray_image_matrix.copy()
@@ -237,14 +241,14 @@ image_initiale.show()
 
 
 
-test1 = patch_search_without_mask(target_region_mask2, gray_image_matrix,9)
+#test1 = patch_search_without_mask(target_region_mask2, gray_image_matrix,9)
 #test1 = patch_search_without_mask(target_region_mask2, image_initiale_matrix,3)
 #test1 = patch_search_without_mask(target_region_mask2, image_initiale_matrix,9)
 #test1 = patch_search(target_region_mask2, gray_image_matrix,3)
 
-test1_image =Image.fromarray(test1)
+#test1_image =Image.fromarray(test1)
 
-test1_image.show()
+#test1_image.show()
 
 
 # si patch_size = 9, c'est plus long à éxecuter
@@ -304,8 +308,8 @@ def smart_patch_search(target_region_mask, im, patch_size):
                 #print("minK: ",min(i+ half_patch_size + 1, im.shape[0] - 1))
                 #print(k)
                 for l in range(max(j - half_patch_size, 0),min(j + half_patch_size + 1, im.shape[1] - 1)):
-                    #print("k,l",k,l)
-                    if target_region_mask[k,l] == True:
+                    print("k,l",k,l)
+                    if target_region_mask[k,l]:
                         patch_mask[k-max(i - half_patch_size, 0),l-max(j - half_patch_size, 0)] = False
                         #print("k',l':",k-max(i - half_patch_size, 0),l-max(j - half_patch_size, 0))
             print("patch_mask:",patch_mask)
@@ -319,3 +323,96 @@ def smart_patch_search(target_region_mask, im, patch_size):
 #test3_image =Image.fromarray(test3)
 
 #test3_image.show()
+
+def front_detection(im, target_region_mask):
+    print("in front_detection")
+    if target_region_mask.shape != im.shape:
+        raise ValueError('target_region_mask and im must have the same shape')
+    if np.all(target_region_mask == np.array([[False for i in range(im.shape[0])] for j in range(im.shape[1])])):
+        return ("No target region")
+    else : 
+        front = np.array([[False for i in range(im.shape[0])] for j in range(im.shape[1])])
+        new_im = np.copy(im)
+        for x in range(im.shape[0]):
+            for y in range(im.shape[1]):
+                if target_region_mask[x, y]:
+                    if not target_region_mask[x - 1, y] or not target_region_mask[x + 1, y] or not target_region_mask[x, y - 1] or not target_region_mask[x, y + 1]:
+                        front[x, y] = True
+        return front
+               
+
+def patch_search_without_mask_compatible(target_region_mask, im, patch_size):
+    # changer im en im_matrix pour être plus cohérent
+    new_matrix = im.copy()
+    half_patch_size = patch_size // 2
+    front = front_detection(im, target_region_mask)
+    confidence_matrix = 1. - np.copy(target_region_mask)
+    while target_region_mask.any():
+        pixel, confidence = lf.pixel_with_min_priority(front, im, target_region_mask, confidence_matrix, im.shape[0], patch_size)
+        if target_region_mask[pixel[0],pixel[1]] == True:
+                patch = im[max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
+                #print("patch_size:",patch_size)
+                #print("patch:", patch)
+                #print("patch.shape:",patch.shape)
+                patch_mask = np.array([[True for i in range(patch_size)] for j in range(patch_size)])
+                print("patch_mask.shape:",patch_mask.shape)
+                print("patch_mask:",patch_mask)
+                q_patch = choose_q(target_region_mask, patch,  patch_mask, new_matrix, patch_size)
+                new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch
+                update_target_region_mask(target_region_mask, pixel, patch_size,im)            
+    return new_matrix
+
+
+def patch_search_compatible(target_region_mask, im, patch_size):
+    # changer im en im_matrix pour être plus cohérent
+    print("in patch_search_compatible")
+    new_matrix = im.copy()
+    half_patch_size = patch_size // 2
+    confidence_matrix = 1. - np.copy(target_region_mask)
+    while target_region_mask.any():
+        print("in while loop")
+        front = front_detection(im, target_region_mask)
+        pixel, confidence = lf.pixel_with_min_priority(front, im, target_region_mask, confidence_matrix, im.shape[0], patch_size)
+        print("pixel :",pixel)
+        if target_region_mask[pixel[0],pixel[1]] == True:
+            patch = im[max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
+            #print("patch_size:",patch_size)
+            print("patch:", patch)
+            #print("patch.shape:",patch.shape)
+            patch_mask = np.array([[True for i in range(patch_size)] for j in range(patch_size)])
+            print("patch_mask.shape:",patch_mask.shape)
+            # on met à False les valeurs de patch_mask qui correspondent à des valeurs de target_region_mask à True
+            #for k in range(max(pixel[0] - half_patch_size, 0),min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1)):
+                #print("maxK: ",max(i - half_patch_size, 0))
+                #print("minK: ",min(i+ half_patch_size + 1, im.shape[0] - 1))
+                #print(k)
+                #for l in range(max(pixel[1] - half_patch_size, 0),min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)):
+                #    print("k,l",k,l)
+                #    if target_region_mask[k,l]:
+                #        patch_mask[k-max(pixel[0] - half_patch_size, 0),l-max(pixel[1] - half_patch_size, 0)] = False
+                        #print("k',l':",k-max(i - half_patch_size, 0),l-max(j - half_patch_size, 0))
+
+            for i in range(patch.shape[0]):
+                for j in range(patch.shape[1]):
+                    global_i = max(pixel[0] - half_patch_size, 0) + i
+                    global_j = max(pixel[1] - half_patch_size, 0) + j
+                    if target_region_mask[global_i, global_j]:
+                        patch_mask[i, j] = False
+
+            print("patch_mask:",patch_mask)
+            q_patch = choose_q(target_region_mask, patch,  patch_mask, new_matrix, patch_size)
+            print("q_patch:",q_patch)
+            new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch
+            update_target_region_mask(target_region_mask, pixel, patch_size,im)
+            #print("target_region_mask:",target_region_mask)  
+            #new_matrix_image = Image.fromarray(new_matrix)
+            #new_matrix_image.show()          
+    return new_matrix
+
+test4 = patch_search_compatible(target_region_mask2, gray_image_matrix,3)
+test4_image =Image.fromarray(test4)
+
+test4_image.show()
+
+
+
