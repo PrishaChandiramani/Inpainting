@@ -24,9 +24,8 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     return confidence, confidence*data_term
 
 
-def update_confidence(confidence_matrix, target_region_mask, selected_pixel, patch_size):
+def update_confidence(confidence_matrix, target_region_mask, selected_pixel, selected_pixel_confidence, patch_size):
     new_confidence_matrix = np.copy(confidence_matrix)
-    selected_pixel_confidence = confidence_matrix[selected_pixel[0], selected_pixel[1]]
     half_patch_size = patch_size // 2
     for x in range(max(selected_pixel[0] - half_patch_size, 0), min(selected_pixel[0] + half_patch_size + 1, image_size - 1)):
         for y in range(max(selected_pixel[1] - half_patch_size, 0), min(selected_pixel[1] + half_patch_size + 1, image_size - 1)):
@@ -34,7 +33,7 @@ def update_confidence(confidence_matrix, target_region_mask, selected_pixel, pat
                 new_confidence_matrix[x, y] = selected_pixel_confidence
     return new_confidence_matrix
 
-def update_target_region_mask(target_region_mask, selected_pixel, patch_size):
+def update_target_region_mask(target_region_mask, selected_pixel, image_size, patch_size):
     new_target_region_mask = np.copy(target_region_mask)
     half_patch_size = patch_size // 2
     for x in range(max(selected_pixel[0] - half_patch_size, 0), min(selected_pixel[0] + half_patch_size + 1, image_size - 1)):
@@ -102,11 +101,29 @@ def pixel_with_min_priority(front_pixels_mask, image, target_region_mask, confid
     pixel_min = front_pixels_list[0]
     for pixel in front_pixels_list:
         pixel_confidence, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, gradient_matrix, orthogonal_vectors_matrix)
+        print("priority : ", pixel_priority)
         if pixel_priority < min_priority:
             pixel_min = pixel
             pixel_min_confidence = pixel_confidence
 
     return pixel_min, pixel_min_confidence
+
+def front_detection(im, target_region_mask):
+    print("in front_detection")
+    if target_region_mask.shape != im.shape:
+        raise ValueError('target_region_mask and im must have the same shape')
+    if np.all(target_region_mask == np.array([[False for i in range(im.shape[0])] for j in range(im.shape[1])])):
+        return ("No target region")
+    else : 
+        front = np.array([[False for i in range(im.shape[0])] for j in range(im.shape[1])])
+        new_im = np.copy(im)
+        for x in range(im.shape[0]):
+            for y in range(im.shape[1]):
+                if target_region_mask[x, y]:
+                    if not target_region_mask[x - 1, y] or not target_region_mask[x + 1, y] or not target_region_mask[x, y - 1] or not target_region_mask[x, y + 1]:
+                        front[x, y] = True
+        return front
+
 
 if __name__ == "__main__":
 
@@ -117,6 +134,7 @@ if __name__ == "__main__":
     target_region_mask = np.array([[i <= j for i in range(image_size)] for j in range(image_size)])
     confidence_matrix = 1. - np.copy(target_region_mask)
     patch_size = 5
+    front_mask = front_detection(img_array, target_region_mask)
 
     show_image(img_array, 'image originale')
     #show_image(np.ma.masked_array(im, target_region_mask), 'image avec une partie enlevée')
@@ -126,9 +144,9 @@ if __name__ == "__main__":
     #show_image(confidence_matrix, 'matrice de confiance initiale')
     #confidence_matrix = update_confidence(confidence_matrix, image_size, target_region_mask, patch_size)
     #show_image(confidence_matrix, 'matrice de confiance après une étape')
-    
-    
-    mask_gradient = compute_gradient(target_region_mask, boundary_mode='symm')
+    pixel_min, confidence = pixel_with_min_priority(front_mask, img_array, target_region_mask, confidence_matrix, image_size, patch_size)
+    print(f"pixel min trouvé : {pixel_min} | confiance : {confidence}")
+    #mask_gradient = compute_gradient(target_region_mask, boundary_mode='symm')
     #gradient = compute_gradient(img_array)
     #show_image(gradient[:, :, 0], "gradient en x")
     #show_image(gradient[:, :, 1], "gradient en y")
@@ -136,6 +154,6 @@ if __name__ == "__main__":
     #show_image(mask_gradient[:, :, 0], "gradient en x")
     #show_image(mask_gradient[:, :, 1], "gradient en y")
     #show_gradient_vectors(mask_gradient)
-    show_one_gradient_vector([25, 25], mask_gradient[25, 25])
+    #show_one_gradient_vector([25, 25], mask_gradient[25, 25])
 
     #show_gradient_vectors(gradient)
