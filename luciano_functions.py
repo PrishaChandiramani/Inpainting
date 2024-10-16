@@ -89,7 +89,6 @@ def pixel_with_max_priority(front_pixels_mask, image, target_region_mask, confid
     gradient_matrix = compute_gradient(image * (1. - target_region_mask))
     
     pixel_max_confidence = 0.
-    pixel_max_priority = 0.
     max_priority = 0.
 
     front_pixels_list = list_front_pixels(front_pixels_mask)
@@ -99,11 +98,11 @@ def pixel_with_max_priority(front_pixels_mask, image, target_region_mask, confid
         pixel_confidence, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, gradient_matrix, orthogonal_vectors_matrix)
         print("priority : ", pixel_priority)
         if pixel_priority > max_priority:
-            pixel_max_priority = pixel_priority
+            max_priority = pixel_priority
             pixel_max = pixel
             pixel_max_confidence = pixel_confidence
 
-    return pixel_max, pixel_max_confidence, pixel_max_priority
+    return pixel_max, pixel_max_confidence, max_priority
 
 def neighbour_to_source_region(x, y, target_region_mask):
     source_region_mask = 1. - target_region_mask
