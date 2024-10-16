@@ -84,29 +84,52 @@ def front_orthogonal_vectors(target_region_mask):
     front_orthogonal_vectors = mask_gradient / np.max(np.abs(mask_gradient))
     return front_orthogonal_vectors
 
-def pixel_with_min_priority(front_pixels_mask, image, target_region_mask, confidence_matrix, image_size, patch_size):
+def pixel_with_max_priority(front_pixels_mask, image, target_region_mask, confidence_matrix, image_size, patch_size):
     orthogonal_vectors_matrix = front_orthogonal_vectors(target_region_mask)
     gradient_matrix = compute_gradient(image * (1. - target_region_mask))
     
-    pixel_min_confidence = 0.
-    min_priority = 1.
+    pixel_max_confidence = 0.
+    pixel_max_priority = 0.
+    max_priority = 0.
 
-    front_pixels_list = []
-
-    for i in range(front_pixels_mask.shape[0]):
-        for j in range(front_pixels_mask.shape[1]):
-            if front_pixels_mask[i, j]:
-                front_pixels_list.append([i, j])
+    front_pixels_list = list_front_pixels(front_pixels_mask)
     
-    pixel_min = front_pixels_list[0]
+    pixel_max = front_pixels_list[0]
     for pixel in front_pixels_list:
         pixel_confidence, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, gradient_matrix, orthogonal_vectors_matrix)
         print("priority : ", pixel_priority)
-        if pixel_priority < min_priority:
-            pixel_min = pixel
-            pixel_min_confidence = pixel_confidence
+        if pixel_priority > max_priority:
+            pixel_max_priority = pixel_priority
+            pixel_max = pixel
+            pixel_max_confidence = pixel_confidence
 
-    return pixel_min, pixel_min_confidence
+    return pixel_max, pixel_max_confidence, pixel_max_priority
+
+def neighbour_to_source_region(x, y, target_region_mask):
+    source_region_mask = 1. - target_region_mask
+    number_of_source_region_neighours = 0
+    if x > 0 and x < source_region_mask.shape[0] - 1:
+        if y > 0 and y < source_region_mask.shape[1] - 1:
+            number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x + 1, y] + source_region_mask[x, y - 1] + source_region_mask[x, y + 1]
+        elif y == 0:
+            number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x + 1, y] + source_region_mask[x, y + 1]
+        else:
+            number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x + 1, y] + source_region_mask[x, y - 1]
+    elif x == 0:
+        if y > 0 and y < source_region_mask.shape[1] - 1:
+            number_of_source_region_neighours += source_region_mask[x + 1, y] + source_region_mask[x, y - 1] + source_region_mask[x, y + 1]
+        elif y == 0:
+            number_of_source_region_neighours += source_region_mask[x + 1, y] + source_region_mask[x, y + 1]
+        else:
+            number_of_source_region_neighours += source_region_mask[x + 1, y] + source_region_mask[x, y - 1]
+    else:
+        if y > 0 and y < source_region_mask.shape[1] - 1:
+            number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x, y - 1] + source_region_mask[x, y + 1]
+        elif y == 0:
+            number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x, y + 1]
+        else:
+            number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x, y - 1]
+    return number_of_source_region_neighours > 0
 
 def front_detection(im, target_region_mask):
     print("in front_detection")
@@ -116,14 +139,19 @@ def front_detection(im, target_region_mask):
         return ("No target region")
     else : 
         front = np.array([[False for i in range(im.shape[0])] for j in range(im.shape[1])])
-        new_im = np.copy(im)
         for x in range(im.shape[0]):
             for y in range(im.shape[1]):
                 if target_region_mask[x, y]:
-                    if not target_region_mask[x - 1, y] or not target_region_mask[x + 1, y] or not target_region_mask[x, y - 1] or not target_region_mask[x, y + 1]:
-                        front[x, y] = True
+                    front[x, y] = neighbour_to_source_region(x, y, target_region_mask)
         return front
 
+def list_front_pixels(front_pixels_mask):
+    front_pixels_list = []
+    for x in range(front_pixels_mask.shape[0]):
+        for y in range(front_pixels_mask.shape[1]):
+            if front_pixels_mask[x, y]:
+                front_pixels_list.append([x, y])
+    return front_pixels_list
 
 if __name__ == "__main__":
 
@@ -144,8 +172,9 @@ if __name__ == "__main__":
     #show_image(confidence_matrix, 'matrice de confiance initiale')
     #confidence_matrix = update_confidence(confidence_matrix, image_size, target_region_mask, patch_size)
     #show_image(confidence_matrix, 'matrice de confiance après une étape')
-    pixel_min, confidence = pixel_with_min_priority(front_mask, img_array, target_region_mask, confidence_matrix, image_size, patch_size)
-    print(f"pixel min trouvé : {pixel_min} | confiance : {confidence}")
+    pixel_max, confidence, pixel_priority = pixel_with_max_priority(front_mask, img_array, target_region_mask, confidence_matrix, image_size, patch_size)
+    print(f"pixel max trouvé : {pixel_max} | confiance : {confidence} | priorité : {pixel_priority}")
+    print(list_front_pixels(front_mask))
     #mask_gradient = compute_gradient(target_region_mask, boundary_mode='symm')
     #gradient = compute_gradient(img_array)
     #show_image(gradient[:, :, 0], "gradient en x")

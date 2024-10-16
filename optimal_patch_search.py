@@ -324,6 +324,31 @@ def smart_patch_search(target_region_mask, im, patch_size):
 
 #test3_image.show()
 
+def neighbour_to_source_region(x, y, target_region_mask):
+    number_of_source_region_neighours = 0
+    if x > 0 and x < target_region_mask.shape[0]:
+        if y > 0 and y < target_region_mask.shape[1]:
+            number_of_source_region_neighours += target_region_mask[x - 1, y] + target_region_mask[x + 1, y] + target_region_mask[x, y - 1] + target_region_mask[x, y + 1]
+        elif y == 0:
+            number_of_source_region_neighours += target_region_mask[x - 1, y] + target_region_mask[x + 1, y] + target_region_mask[x, y + 1]
+        else:
+            number_of_source_region_neighours += target_region_mask[x - 1, y] + target_region_mask[x + 1, y] + target_region_mask[x, y - 1]
+    elif x == 0:
+        if y > 0 and y < target_region_mask.shape[1]:
+            number_of_source_region_neighours += target_region_mask[x + 1, y] + target_region_mask[x, y - 1] + target_region_mask[x, y + 1]
+        elif y == 0:
+            number_of_source_region_neighours += target_region_mask[x + 1, y] + target_region_mask[x, y + 1]
+        else:
+            number_of_source_region_neighours += target_region_mask[x + 1, y] + target_region_mask[x, y - 1]
+    else:
+        if y > 0 and y < target_region_mask.shape[1]:
+            number_of_source_region_neighours += target_region_mask[x - 1, y] + target_region_mask[x, y - 1] + target_region_mask[x, y + 1]
+        elif y == 0:
+            number_of_source_region_neighours += target_region_mask[x - 1, y] + target_region_mask[x, y + 1]
+        else:
+            number_of_source_region_neighours += target_region_mask[x - 1, y] + target_region_mask[x, y - 1]
+    return number_of_source_region_neighours > 0
+
 def front_detection(im, target_region_mask):
     print("in front_detection")
     if target_region_mask.shape != im.shape:
@@ -336,8 +361,7 @@ def front_detection(im, target_region_mask):
         for x in range(im.shape[0]):
             for y in range(im.shape[1]):
                 if target_region_mask[x, y]:
-                    if not target_region_mask[x - 1, y] or not target_region_mask[x + 1, y] or not target_region_mask[x, y - 1] or not target_region_mask[x, y + 1]:
-                        front[x, y] = True
+                    front[x, y] = neighbour_to_source_region(x, y, target_region_mask)
         return front
                
 
