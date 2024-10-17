@@ -360,8 +360,8 @@ def patch_search_compatible(target_region_mask, im, patch_size):
         print("in while loop")
         
         front = lf.front_detection(im, target_region_mask)
-        #lf.show_image(front, 'contour de la target region')
-        pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, im, target_region_mask, confidence_matrix, im.shape[0], patch_size)
+        lf.show_image(front, 'contour de la target region')
+        pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, im, target_region_mask, confidence_matrix, im.shape, patch_size)
         print(f"pixel : {pixel} | confidence : {confidence} | data term : {data_term} | priority : {priority}")
         if target_region_mask[pixel[0],pixel[1]] == True:
             patch = im[max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
@@ -403,7 +403,7 @@ def patch_search_compatible(target_region_mask, im, patch_size):
             #new_matrix_image.show()          
     return new_matrix
 
-test4 = patch_search_compatible(target_region_mask2, gray_image_matrix,3)
+test4 = patch_search_compatible(target_region_mask2, gray_image_matrix, 5)
 test4_image =Image.fromarray(test4)
 
 test4_image.show()
