@@ -173,7 +173,7 @@ if __name__ == "__main__":
     #show_image(confidence_matrix, 'matrice de confiance après une étape')
     pixel_max, confidence, pixel_priority = pixel_with_max_priority(front_mask, img_array, target_region_mask, confidence_matrix, image_size, patch_size)
     print(f"pixel max trouvé : {pixel_max} | confiance : {confidence} | priorité : {pixel_priority}")
-    print(list_front_pixels(front_mask))
+    #print(list_front_pixels(front_mask))
     #mask_gradient = compute_gradient(target_region_mask, boundary_mode='symm')
     #gradient = compute_gradient(img_array)
     #show_image(gradient[:, :, 0], "gradient en x")
