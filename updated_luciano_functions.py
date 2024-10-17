@@ -96,7 +96,6 @@ def pixel_with_max_priority(front_pixels_mask, image, target_region_mask, confid
     pixel_max = front_pixels_list[0]
     for pixel in front_pixels_list:
         pixel_confidence, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, gradient_matrix, orthogonal_vectors_matrix)
-        print("priority : ", pixel_priority)
         if pixel_priority > max_priority:
             max_priority = pixel_priority
             pixel_max = pixel

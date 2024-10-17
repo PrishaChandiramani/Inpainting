@@ -393,6 +393,7 @@ def patch_search_compatible(target_region_mask, im, patch_size):
         print(front)
         pixel, confidence, max_priority = lf.pixel_with_max_priority(front, im, target_region_mask, confidence_matrix, im.shape[0], patch_size)
         print("pixel :",pixel)
+        print("max_priority:",max_priority)
         if target_region_mask[pixel[0],pixel[1]] == True:
             patch = im[max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
             #print("patch_size:",patch_size)
