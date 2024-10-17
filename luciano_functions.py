@@ -25,9 +25,8 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     return confidence, confidence*data_term
 
 
-def update_confidence(confidence_matrix, target_region_mask, selected_pixel, patch_size):
+def update_confidence(confidence_matrix, target_region_mask, selected_pixel, selected_pixel_confidence,patch_size, image_size):
     new_confidence_matrix = np.copy(confidence_matrix)
-    selected_pixel_confidence = confidence_matrix[selected_pixel[0], selected_pixel[1]]
     half_patch_size = patch_size // 2
     for x in range(max(selected_pixel[0] - half_patch_size, 0), min(selected_pixel[0] + half_patch_size + 1, image_size - 1)):
         for y in range(max(selected_pixel[1] - half_patch_size, 0), min(selected_pixel[1] + half_patch_size + 1, image_size - 1)):
@@ -88,7 +87,7 @@ def front_orthogonal_vectors(target_region_mask):
 
 def pixel_with_min_priority(front_pixels_mask, image, target_region_mask, confidence_matrix, image_size, patch_size):
     orthogonal_vectors_matrix = front_orthogonal_vectors(target_region_mask)
-    gradient_matrix = compute_gradient(image * (1. - target_region_mask))
+    gradient_matrix = compute_gradient(image * (target_region_mask))
     
     pixel_min_confidence = 0.
     min_priority = 1.
