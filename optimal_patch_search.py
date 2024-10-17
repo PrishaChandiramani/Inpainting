@@ -2,7 +2,7 @@ from PIL import Image
 import numpy as np
 import luciano_functions as lf
 
-image = Image.open("./images/a-b.ppm.png")
+image = Image.open("./Inpainting/images/a-b-c.ppm.png")
 
 image_matrix = np.array(image)
 
@@ -75,19 +75,14 @@ def choose_q(target_region_mask, p,p_mask,im, patch_size):
 
 ## Test
 
-target_region_mask = np.array([[False for i in range(128)] for j in range(128)])
-target_region_mask[12:48,12:48] = True 
-print("target_region_shape: ",target_region_mask.shape)
+#print("target_region_shape: ",target_region_mask.shape)
 
 
 
 new_matrix = gray_image_matrix.copy()
 
 new_matrix_mask = new_matrix.copy()
-for i in range(128):
-    for j in range(128):
-        if target_region_mask[i,j] == True:
-            new_matrix_mask[i,j] = 0
+
 
 new_matrix_image = Image.fromarray(new_matrix_mask)
 new_matrix_image.show()
@@ -103,15 +98,6 @@ p1_image = Image.fromarray(p1)
 #p1_image.show()
 
 
-D1 = choose_q(target_region_mask, p1, p1_mask, new_matrix,9)
-
-D1_image = Image.fromarray(D1)
-D1_image.show()
-
-
-new_matrix[8:17,8:17] = D1
-target_region_mask[8:17,8:17] = False
-
 p2 = new_matrix[44:53,44:53] # patch 9
 p2_mask = np.array([[True for i in range(9)] for j in range(9)])
 p2_mask [44:48,44:48] = False # attention dépend de target region mask or à chaque itération, target region mask change, pour l'instant on ne prend pas ça en compte, mais il le faut
@@ -120,41 +106,19 @@ p2_image = Image.fromarray(p2)
 #p2_image.show()
 
 
-D2 = choose_q(target_region_mask, p2,p2_mask, new_matrix,9)
-
-D2_image = Image.fromarray(D2)
-D2_image.show()
-
-new_matrix[44:53,44:53] = D2
-target_region_mask[44:53,44:53] = False
 
 
 p3 = new_matrix[8:17,44:53]
 p3_mask = np.array([[True for i in range(9)] for j in range(9)])
 p3_mask [12:17,44:48] = False
 
-D3 = choose_q(target_region_mask, p3,  p3_mask, new_matrix,9)
-
-D3_image = Image.fromarray(D3)
-D3_image.show()
-
-new_matrix[8:17,44:53] = D3
-
-target_region_mask[8:12,44:53] = False
 
 
 
 p4 = new_matrix[30:39,5:14]
 p4_mask = np.array([[True for i in range(9)] for j in range(9)])
 p4_mask [30:39,12:14] = False
-D4 = choose_q(target_region_mask, p4,  p4_mask, new_matrix,9)
 
-D4_image = Image.fromarray(D4)
-D4_image.show()
-
-new_matrix[30:39,5:14] = D4
-
-target_region_mask[8:12,44:53] = False
 
 
 new_matrix_image = Image.fromarray(new_matrix)
@@ -165,14 +129,13 @@ new_matrix_image.show()
 
 
 def update_target_region_mask(target_region_mask, selected_pixel, patch_size,im):
-    print("in update_target_region_mask")
+    #print("in update_target_region_mask")
     half_patch_size = patch_size // 2
     target_region_mask[selected_pixel[0],selected_pixel[1]] = False
     for x in range(max(selected_pixel[0] - half_patch_size, 0), min(selected_pixel[0] + half_patch_size + 1, im.shape[0] - 1)):
         for y in range(max(selected_pixel[1] - half_patch_size, 0), min(selected_pixel[1] + half_patch_size + 1, im.shape[1] - 1)):
             if target_region_mask[x, y]:
                 target_region_mask[x, y] = False
-    print("new_target_region_mask",target_region_mask)
     return True
 
 
@@ -227,7 +190,7 @@ def patch_search(target_region_mask, im, patch_size):
     return new_matrix
 
 ## nouveaux tests
-target_region_mask2 = np.array([[False for i in range(128)] for j in range(128)])
+target_region_mask2 = np.array([[False for i in range(gray_image_matrix.shape[0])] for j in range(gray_image_matrix.shape[1])])
 target_region_mask2[16:44,16:44] = True 
 
 image_initiale_matrix = gray_image_matrix.copy()
@@ -395,16 +358,18 @@ def patch_search_compatible(target_region_mask, im, patch_size):
     confidence_matrix = 1. - np.copy(target_region_mask)
     while target_region_mask.any():
         print("in while loop")
-        front = front_detection(im, target_region_mask)
-        pixel, confidence = lf.pixel_with_min_priority(front, im, target_region_mask, confidence_matrix, im.shape[0], patch_size)
-        print("pixel :",pixel)
+        
+        front = lf.front_detection(im, target_region_mask)
+        #lf.show_image(front, 'contour de la target region')
+        pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, im, target_region_mask, confidence_matrix, im.shape[0], patch_size)
+        print(f"pixel : {pixel} | confidence : {confidence} | data term : {data_term} | priority : {priority}")
         if target_region_mask[pixel[0],pixel[1]] == True:
             patch = im[max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
             #print("patch_size:",patch_size)
-            print("patch:", patch)
+            #print("patch:", patch)
             #print("patch.shape:",patch.shape)
             patch_mask = np.array([[True for i in range(patch_size)] for j in range(patch_size)])
-            print("patch_mask.shape:",patch_mask.shape)
+            #print("patch_mask.shape:",patch_mask.shape)
             # on met à False les valeurs de patch_mask qui correspondent à des valeurs de target_region_mask à True
             #for k in range(max(pixel[0] - half_patch_size, 0),min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1)):
                 #print("maxK: ",max(i - half_patch_size, 0))
@@ -423,11 +388,16 @@ def patch_search_compatible(target_region_mask, im, patch_size):
                     if target_region_mask[global_i, global_j]:
                         patch_mask[i, j] = False
 
-            print("patch_mask:",patch_mask)
+            #print("patch_mask:",patch_mask)
             q_patch = choose_q(target_region_mask, patch,  patch_mask, new_matrix, patch_size)
-            print("q_patch:",q_patch)
+            #print("q_patch:",q_patch)
             new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch
+            confidence_matrix = lf.update_confidence(confidence_matrix, target_region_mask, pixel, confidence, patch_size, im.shape)
+            
+            #lf.show_image(confidence_matrix, "matrice de confiance à jour")
             update_target_region_mask(target_region_mask, pixel, patch_size,im)
+            
+            
             #print("target_region_mask:",target_region_mask)  
             #new_matrix_image = Image.fromarray(new_matrix)
             #new_matrix_image.show()          

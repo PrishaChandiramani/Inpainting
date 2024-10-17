@@ -13,22 +13,21 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     half_patch_size = patch_size // 2
     for x in range(max(pixel_x - half_patch_size, 0), min(pixel_x + half_patch_size + 1, image_size - 1)):
         for y in range(max(pixel_y - half_patch_size, 0), min(pixel_y + half_patch_size + 1, image_size - 1)):
-            if not target_region_mask[x, y]:
-                confidence += confidence_matrix[x, y]
+            confidence += confidence_matrix[x, y]
     confidence /= patch_size*patch_size
 
     # Calcul du terme de données
     data_term = np.abs(gradient_matrix[x, y, 0] * orthogonal_vectors_matrix[x, y, 0] + gradient_matrix[x, y, 1] * orthogonal_vectors_matrix[x, y, 1])
-    data_term /= 255
+    data_term /= 25
 
-    return confidence, confidence*data_term
+    return confidence, data_term, confidence*data_term
 
 
-def update_confidence(confidence_matrix, target_region_mask, selected_pixel, selected_pixel_confidence, patch_size):
+def update_confidence(confidence_matrix, target_region_mask, selected_pixel, selected_pixel_confidence, patch_size, image_size):
     new_confidence_matrix = np.copy(confidence_matrix)
     half_patch_size = patch_size // 2
-    for x in range(max(selected_pixel[0] - half_patch_size, 0), min(selected_pixel[0] + half_patch_size + 1, image_size - 1)):
-        for y in range(max(selected_pixel[1] - half_patch_size, 0), min(selected_pixel[1] + half_patch_size + 1, image_size - 1)):
+    for x in range(max(selected_pixel[0] - half_patch_size, 0), min(selected_pixel[0] + half_patch_size + 1, image_size[0] - 1)):
+        for y in range(max(selected_pixel[1] - half_patch_size, 0), min(selected_pixel[1] + half_patch_size + 1, image_size[1] - 1)):
             if target_region_mask[x, y]:
                 new_confidence_matrix[x, y] = selected_pixel_confidence
     return new_confidence_matrix
@@ -88,21 +87,21 @@ def pixel_with_max_priority(front_pixels_mask, image, target_region_mask, confid
     orthogonal_vectors_matrix = front_orthogonal_vectors(target_region_mask)
     gradient_matrix = compute_gradient(image * (1. - target_region_mask))
     
-    pixel_max_confidence = 0.
+    max_confidence = 0.
+    max_data_term = 0.
     max_priority = 0.
 
     front_pixels_list = list_front_pixels(front_pixels_mask)
-    
     pixel_max = front_pixels_list[0]
     for pixel in front_pixels_list:
-        pixel_confidence, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, gradient_matrix, orthogonal_vectors_matrix)
-        print("priority : ", pixel_priority)
+        pixel_confidence, pixel_data_term, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, gradient_matrix, orthogonal_vectors_matrix)
         if pixel_priority > max_priority:
             max_priority = pixel_priority
             pixel_max = pixel
-            pixel_max_confidence = pixel_confidence
+            max_confidence = pixel_confidence
+            max_data_term = pixel_data_term
 
-    return pixel_max, pixel_max_confidence, max_priority
+    return pixel_max, max_confidence, max_data_term, max_priority
 
 def neighbour_to_source_region(x, y, target_region_mask):
     source_region_mask = 1. - target_region_mask
@@ -131,7 +130,6 @@ def neighbour_to_source_region(x, y, target_region_mask):
     return number_of_source_region_neighours > 0
 
 def front_detection(im, target_region_mask):
-    print("in front_detection")
     if target_region_mask.shape != im.shape:
         raise ValueError('target_region_mask and im must have the same shape')
     if np.all(target_region_mask == np.array([[False for i in range(im.shape[0])] for j in range(im.shape[1])])):
@@ -156,9 +154,9 @@ if __name__ == "__main__":
 
     img = Image.open('./Inpainting/circle.png')
     img_array = np.array(ImageOps.grayscale(img))
-    image_size = img.size[0]
+    image_size = img.size
 
-    target_region_mask = np.array([[i <= j for i in range(image_size)] for j in range(image_size)])
+    target_region_mask = np.array([[i <= j for i in range(image_size[0])] for j in range(image_size[1])])
     confidence_matrix = 1. - np.copy(target_region_mask)
     patch_size = 5
     front_mask = front_detection(img_array, target_region_mask)
@@ -167,12 +165,15 @@ if __name__ == "__main__":
     #show_image(np.ma.masked_array(im, target_region_mask), 'image avec une partie enlevée')
     show_image(target_region_mask, 'région enlevée de l\'image originale')
     #show_image(confidence_matrix, 'matrice de confiance des pixels')
-
+    show_image(front_mask, 'contour de la target region')
     #show_image(confidence_matrix, 'matrice de confiance initiale')
     #confidence_matrix = update_confidence(confidence_matrix, image_size, target_region_mask, patch_size)
     #show_image(confidence_matrix, 'matrice de confiance après une étape')
-    pixel_max, confidence, pixel_priority = pixel_with_max_priority(front_mask, img_array, target_region_mask, confidence_matrix, image_size, patch_size)
+    pixel_max, confidence, data_term, pixel_priority = pixel_with_max_priority(front_mask, img_array, target_region_mask, confidence_matrix, image_size[0], patch_size)
     print(f"pixel max trouvé : {pixel_max} | confiance : {confidence} | priorité : {pixel_priority}")
+    show_image(confidence_matrix, "matrice de confiance avant")
+    confidence_matrix = update_confidence(confidence_matrix, target_region_mask, pixel_max, confidence, patch_size, image_size)
+    show_image(confidence_matrix, "matrice de confiance après")
     #print(list_front_pixels(front_mask))
     #mask_gradient = compute_gradient(target_region_mask, boundary_mode='symm')
     #gradient = compute_gradient(img_array)
