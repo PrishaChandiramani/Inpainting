@@ -25,13 +25,13 @@ image_initiale_matrix[16:44,16:44] = 255
 image_initiale = Image.fromarray(image_initiale_matrix)
 image_initiale.show()
 
-#test4 = pf.patch_search_compatible(target_region_mask2, gray_image_matrix, 3)
-#test4_image =Image.fromarray(test4)
+test4 = pf.patch_search_compatible(target_region_mask2, gray_image_matrix, 3)
+test4_image =Image.fromarray(test4)
 
-#test4_image.show()
+test4_image.show()
 
-test5 = pf.patch_search_compatible_niterations(target_region_mask2, gray_image_matrix,3,180)
-test5_image =Image.fromarray(test5)
+#test5 = pf.patch_search_compatible_niterations(target_region_mask2, gray_image_matrix,3,196)
+#test5_image =Image.fromarray(test5)
 
-test5_image.show()
+#test5_image.show()
 

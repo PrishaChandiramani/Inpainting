@@ -126,7 +126,7 @@ def patch_search_compatible(target_region_mask, im, patch_size):
         pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, new_matrix, target_region_mask, confidence_matrix, im.shape, patch_size)
         print(f"pixel : {pixel} | confidence : {confidence} | data term : {data_term} | priority : {priority}")
         if target_region_mask[pixel[0],pixel[1]] == True:
-            patch = im[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
+            patch = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
             #print("patch_size:",patch_size)
             #print("patch:", patch)
             #print("patch.shape:",patch.shape)
@@ -153,7 +153,8 @@ def patch_search_compatible(target_region_mask, im, patch_size):
             #print("patch_mask:",patch_mask)
             q_patch = choose_q(target_region_mask, patch,  patch_mask, new_matrix, patch_size)
             #print("q_patch:",q_patch)
-            new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch
+            #new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch
+            new_matrix = update_matrix(q_patch, target_region_mask, pixel, half_patch_size, new_matrix)
             confidence_matrix = lf.update_confidence(confidence_matrix, target_region_mask, pixel, confidence, patch_size, im.shape)
             
             #lf.show_image(confidence_matrix, "matrice de confiance à jour")
@@ -194,20 +195,22 @@ def patch_search_compatible_niterations(target_region_mask, im, patch_size,n):
         pixel_list.append(pixel)
         print("pixel :",pixel)
         if target_region_mask[pixel[0],pixel[1]] == True:
-            patch = im[max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
+            patch = new_matrix[max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
+            #printer ces indices
+            print("encadrement : ",max(pixel[0] - half_patch_size, 0), min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0), min(pixel[1] + half_patch_size + 1, im.shape[1] - 1))
             print("patch:", patch)
             patch_mask_target_region = target_region_mask[max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-            patch_mask = np.array([[True for i in range(patch_size)] for j in range(patch_size)])
+            patch_mask = np.array([[False for i in range(patch_size)] for j in range(patch_size)])
             print("patch_mask.shape:",patch_mask.shape)
 
             for i in range(patch.shape[0]):
                 for j in range(patch.shape[1]):
                     global_i = max(pixel[0] - half_patch_size, 0) + i
                     global_j = max(pixel[1] - half_patch_size, 0) + j
-                    print("global_i:",global_i)
-                    print("global_j:",global_j)
-                    if target_region_mask[global_i, global_j]:
-                        patch_mask[i, j] = False
+                    #print("global_i:",global_i)
+                    #print("global_j:",global_j)
+                    if not target_region_mask[global_i, global_j]:
+                        patch_mask[i, j] = True
 
             print("patch_mask:",patch_mask)
             print("patch_mask_target_region: ", patch_mask_target_region)
