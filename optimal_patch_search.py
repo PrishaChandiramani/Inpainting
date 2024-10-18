@@ -99,84 +99,84 @@ print("target_region_shape: ",target_region_mask.shape)
 
 
 
-new_matrix = gray_image_matrix.copy()
+#new_matrix = gray_image_matrix.copy()
 
-new_matrix_mask = new_matrix.copy()
-for i in range(62):
-    for j in range(62):
-        if target_region_mask[i,j] == True:
-            new_matrix_mask[i,j] = 0
+#new_matrix_mask = new_matrix.copy()
+#for i in range(62):
+#    for j in range(62):
+#        if target_region_mask[i,j] == True:
+#            new_matrix_mask[i,j] = 0
 
-new_matrix_image = Image.fromarray(new_matrix_mask)
-new_matrix_image.show()
+#new_matrix_image = Image.fromarray(new_matrix_mask)
+#new_matrix_image.show()
 
 ## écrire la fonction copy image data
 
 
-p1 = new_matrix[8:17,8:17] # patch 9
-p1_mask = np.array([[True for i in range(9)] for j in range(9)])
-p1_mask [12:17,12:17] = False
+#p1 = new_matrix[8:17,8:17] # patch 9
+#p1_mask = np.array([[True for i in range(9)] for j in range(9)])
+#p1_mask [12:17,12:17] = False
 
-p1_image = Image.fromarray(p1)
+#p1_image = Image.fromarray(p1)
 #p1_image.show()
 
 
-D1 = choose_q(target_region_mask, p1, p1_mask, new_matrix,9)
+#D1 = choose_q(target_region_mask, p1, p1_mask, new_matrix,9)
 
-D1_image = Image.fromarray(D1)
-D1_image.show()
+##D1_image = Image.fromarray(D1)
+#D1_image.show()
 
 
-new_matrix[8:17,8:17] = D1
-target_region_mask[8:17,8:17] = False
+#new_matrix[8:17,8:17] = D1
+#target_region_mask[8:17,8:17] = False
 
-p2 = new_matrix[44:53,44:53] # patch 9
-p2_mask = np.array([[True for i in range(9)] for j in range(9)])
-p2_mask [44:48,44:48] = False # attention dépend de target region mask or à chaque itération, target region mask change, pour l'instant on ne prend pas ça en compte, mais il le faut
+#p2 = new_matrix[44:53,44:53] # patch 9
+#p2_mask = np.array([[True for i in range(9)] for j in range(9)])
+#p2_mask [44:48,44:48] = False # attention dépend de target region mask or à chaque itération, target region mask change, pour l'instant on ne prend pas ça en compte, mais il le faut
 
-p2_image = Image.fromarray(p2)
+#p2_image = Image.fromarray(p2)
 #p2_image.show()
 
 
-D2 = choose_q(target_region_mask, p2,p2_mask, new_matrix,9)
+#D2 = choose_q(target_region_mask, p2,p2_mask, new_matrix,9)
 
-D2_image = Image.fromarray(D2)
-D2_image.show()
+#D2_image = Image.fromarray(D2)
+#D2_image.show()
 
-new_matrix[44:53,44:53] = D2
-target_region_mask[44:53,44:53] = False
-
-
-p3 = new_matrix[8:17,44:53]
-p3_mask = np.array([[True for i in range(9)] for j in range(9)])
-p3_mask [12:17,44:48] = False
-
-D3 = choose_q(target_region_mask, p3,  p3_mask, new_matrix,9)
-
-D3_image = Image.fromarray(D3)
-D3_image.show()
-
-new_matrix[8:17,44:53] = D3
-
-target_region_mask[8:12,44:53] = False
+#new_matrix[44:53,44:53] = D2
+#target_region_mask[44:53,44:53] = False
 
 
+#p3 = new_matrix[8:17,44:53]
+#p3_mask = np.array([[True for i in range(9)] for j in range(9)])
+#p3_mask [12:17,44:48] = False
 
-p4 = new_matrix[30:39,5:14]
-p4_mask = np.array([[True for i in range(9)] for j in range(9)])
-p4_mask [30:39,12:14] = False
-D4 = choose_q(target_region_mask, p4,  p4_mask, new_matrix,9)
+#D3 = choose_q(target_region_mask, p3,  p3_mask, new_matrix,9)
 
-D4_image = Image.fromarray(D4)
-D4_image.show()
+#D3_image = Image.fromarray(D3)
+#D3_image.show()
 
-new_matrix[30:39,5:14] = D4
+#new_matrix[8:17,44:53] = D3
 
-target_region_mask[8:12,44:53] = False
+#target_region_mask[8:12,44:53] = False
 
 
-new_matrix_image = Image.fromarray(new_matrix)
-new_matrix_image.show()
+
+#p4 = new_matrix[30:39,5:14]
+#p4_mask = np.array([[True for i in range(9)] for j in range(9)])
+#p4_mask [30:39,12:14] = False
+#D4 = choose_q(target_region_mask, p4,  p4_mask, new_matrix,9)
+
+#D4_image = Image.fromarray(D4)
+#D4_image.show()
+
+#new_matrix[30:39,5:14] = D4
+
+#target_region_mask[8:12,44:53] = False
+
+
+#new_matrix_image = Image.fromarray(new_matrix)
+#new_matrix_image.show()
 
 
 ## nouvelles fonctions
