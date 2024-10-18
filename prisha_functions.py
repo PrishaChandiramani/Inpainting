@@ -121,7 +121,7 @@ def patch_search_compatible(target_region_mask, im, patch_size):
     while target_region_mask.any():
         print("in while loop")
         
-        front = lf.front_detection(new_matrix, target_region_mask)
+        front = front_detection(new_matrix, target_region_mask)
         #lf.show_image(front, 'contour de la target region')
         pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, new_matrix, target_region_mask, confidence_matrix, im.shape, patch_size)
         print(f"pixel : {pixel} | confidence : {confidence} | data term : {data_term} | priority : {priority}")
