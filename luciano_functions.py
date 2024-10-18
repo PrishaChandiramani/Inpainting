@@ -14,15 +14,18 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     for x in range(max(pixel_x - half_patch_size, 0), min(pixel_x + half_patch_size + 1, image_size[0] - 1)):
         for y in range(max(pixel_y - half_patch_size, 0), min(pixel_y + half_patch_size + 1, image_size[1] - 1)):
             confidence += confidence_matrix[x, y]
+
+    #print(confidence_matrix[max(pixel_x - half_patch_size, 0): min(pixel_x + half_patch_size + 1, image_size[0] - 1), max(pixel_y - half_patch_size, 0) : min(pixel_y + half_patch_size + 1, image_size[1] - 1)])
     confidence /= patch_size*patch_size
-    confidence *= 10
+    #confidence *= 10
 
     # Calcul du terme de données
+    print(f" pixel : {pixel} | gradient : ({gradient_matrix[x, y, 0]}, {gradient_matrix[x, y, 1]}) | vecteur normal : ({orthogonal_vectors_matrix[x, y, 0]}, {orthogonal_vectors_matrix[x, y, 1]})")
     data_term = np.abs(gradient_matrix[x, y, 0] * orthogonal_vectors_matrix[x, y, 0] + gradient_matrix[x, y, 1] * orthogonal_vectors_matrix[x, y, 1])
     data_term /= 255
     data_term *= 100
 
-    return confidence, data_term, confidence*data_term
+    return confidence, data_term, confidence
 
 
 def update_confidence(confidence_matrix, target_region_mask, selected_pixel, selected_pixel_confidence, patch_size, image_size):
@@ -99,6 +102,7 @@ def pixel_with_max_priority(front_pixels_mask, image, target_region_mask, confid
     pixel_max = front_pixels_list[0]
     for pixel in front_pixels_list:
         pixel_confidence, pixel_data_term, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, orthogonal_to_gradient_matrix, orthogonal_vectors_matrix)
+        #print(f"-- pixel : {pixel} | confidence : {pixel_confidence} | data term : {pixel_data_term} | priority : {pixel_priority}")
         if pixel_priority > max_priority:
             max_priority = pixel_priority
             pixel_max = pixel
