@@ -1,5 +1,5 @@
 import prisha_optimal_functions as pf
-import luciano_optimal_functions as lf
+
 import image_compression as ic
 
 

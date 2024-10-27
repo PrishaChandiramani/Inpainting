@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 from skimage.util import view_as_windows
-import luciano_optimal_functions.py as lf
+import luciano_optimal_functions as lf
 import time
 
 
@@ -86,28 +86,29 @@ def update_target_region_mask(target_region_mask, selected_pixel, patch_size,im)
 
 
 def neighbour_to_source_region(x, y, target_region_mask):
+    source_region_mask = 1. - target_region_mask
     number_of_source_region_neighours = 0
     if x > 0 and x < target_region_mask.shape[0]:
         if y > 0 and y < target_region_mask.shape[1]:
-            number_of_source_region_neighours += target_region_mask[x - 1, y] + target_region_mask[x + 1, y] + target_region_mask[x, y - 1] + target_region_mask[x, y + 1]
+            number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x + 1, y] + source_region_mask[x, y - 1] + source_region_mask[x, y + 1]
         elif y == 0:
-            number_of_source_region_neighours += target_region_mask[x - 1, y] + target_region_mask[x + 1, y] + target_region_mask[x, y + 1]
+            number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x + 1, y] + source_region_mask[x, y + 1]
         else:
-            number_of_source_region_neighours += target_region_mask[x - 1, y] + target_region_mask[x + 1, y] + target_region_mask[x, y - 1]
+            number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x + 1, y] + source_region_mask[x, y - 1]
     elif x == 0:
         if y > 0 and y < target_region_mask.shape[1]:
-            number_of_source_region_neighours += target_region_mask[x + 1, y] + target_region_mask[x, y - 1] + target_region_mask[x, y + 1]
+            number_of_source_region_neighours += source_region_mask[x + 1, y] + source_region_mask[x, y - 1] + source_region_mask[x, y + 1]
         elif y == 0:
-            number_of_source_region_neighours += target_region_mask[x + 1, y] + target_region_mask[x, y + 1]
+            number_of_source_region_neighours += source_region_mask[x + 1, y] + source_region_mask[x, y + 1]
         else:
-            number_of_source_region_neighours += target_region_mask[x + 1, y] + target_region_mask[x, y - 1]
+            number_of_source_region_neighours += source_region_mask[x + 1, y] + source_region_mask[x, y - 1]
     else:
         if y > 0 and y < target_region_mask.shape[1]:
-            number_of_source_region_neighours += target_region_mask[x - 1, y] + target_region_mask[x, y - 1] + target_region_mask[x, y + 1]
+            number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x, y - 1] + source_region_mask[x, y + 1]
         elif y == 0:
-            number_of_source_region_neighours += target_region_mask[x - 1, y] + target_region_mask[x, y + 1]
+            number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x, y + 1]
         else:
-            number_of_source_region_neighours += target_region_mask[x - 1, y] + target_region_mask[x, y - 1]
+            number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x, y - 1]
     return number_of_source_region_neighours > 0
 
 

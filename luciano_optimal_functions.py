@@ -25,7 +25,7 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     data_term /= 255
     data_term *= 100
 
-    return confidence, data_term, confidence
+    return confidence, data_term, confidence*data_term
 
 
 def update_confidence(confidence_matrix, target_region_mask, selected_pixel, selected_pixel_confidence, patch_size, image_size):
@@ -76,6 +76,7 @@ def pixel_with_max_priority(front_pixels_mask, image, target_region_mask, confid
     max_priority = 0.
 
     front_pixels_list = list_front_pixels(front_pixels_mask)
+    print(f"front pixels list : {front_pixels_list}")
     pixel_max = front_pixels_list[0]
     for pixel in front_pixels_list:
         pixel_confidence, pixel_data_term, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, orthogonal_to_gradient_matrix, orthogonal_vectors_matrix)
