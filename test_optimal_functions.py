@@ -22,7 +22,7 @@ def test1():
     image_initiale_matrix = gray_image_matrix.copy()
     image_initiale_matrix[16:44,16:44] = 255
     image_initiale = Image.fromarray(image_initiale_matrix)
-    image_initiale.show()
+    #image_initiale.show()
     test4 = pf.patch_search_compatible(target_region_mask2, gray_image_matrix, 3)
     test4_image =Image.fromarray(test4)
 
