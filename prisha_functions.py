@@ -213,9 +213,9 @@ def patch_search_compatible_niterations(target_region_mask, im, patch_size,n):
                         patch_mask[i, j] = True
 
             print("patch_mask:",patch_mask)
-            print("patch_mask_target_region: ", patch_mask_target_region)
+            #print("patch_mask_target_region: ", patch_mask_target_region)
             q_patch = choose_q(target_region_mask, patch,  patch_mask, new_matrix, patch_size)
-            #print("q_patch:",q_patch)
+            print("q_patch:",q_patch)
             #new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch
             new_matrix = update_matrix(q_patch, target_region_mask, pixel, half_patch_size, new_matrix)
             confidence_matrix = lf.update_confidence(confidence_matrix, target_region_mask, pixel, confidence, patch_size, im.shape)
@@ -226,9 +226,9 @@ def patch_search_compatible_niterations(target_region_mask, im, patch_size,n):
             new_matrix_image = Image.fromarray(new_matrix)
             target_region_mask_matrix = target_region_mask * 255
             target_region_mask_matrix = target_region_mask_matrix.astype(np.uint8)
-            #time.sleep(1)
-            #new_matrix_image.show()
-            #time.sleep(1)
+            time.sleep(1)
+            new_matrix_image.show()
+            time.sleep(1)
             target_region_mask_image = Image.fromarray(target_region_mask_matrix)
             #target_region_mask_image.show()  
     #print(pixel_list)    
