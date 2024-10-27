@@ -20,7 +20,7 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     #confidence *= 10
 
     # Calcul du terme de données
-    print(f" pixel : {pixel} | gradient : ({gradient_matrix[pixel_x, pixel_y, 0]}, {gradient_matrix[pixel_x, pixel_y, 1]}) | vecteur normal : ({orthogonal_vectors_matrix[pixel_x, pixel_y, 0]}, {orthogonal_vectors_matrix[pixel_x, pixel_y, 1]})")
+    #print(f" pixel : {pixel} | gradient : ({gradient_matrix[pixel_x, pixel_y, 0]}, {gradient_matrix[pixel_x, pixel_y, 1]}) | vecteur normal : ({orthogonal_vectors_matrix[pixel_x, pixel_y, 0]}, {orthogonal_vectors_matrix[pixel_x, pixel_y, 1]})")
     data_term = np.abs(gradient_matrix[pixel_x, pixel_y, 0] * orthogonal_vectors_matrix[pixel_x, pixel_y, 0] + gradient_matrix[pixel_x, pixel_y, 1] * orthogonal_vectors_matrix[pixel_x, pixel_y, 1])
     data_term /= 255
     data_term *= 100
