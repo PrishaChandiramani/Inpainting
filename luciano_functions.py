@@ -20,8 +20,8 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     #confidence *= 10
 
     # Calcul du terme de données
-    print(f" pixel : {pixel} | gradient : ({gradient_matrix[x, y, 0]}, {gradient_matrix[x, y, 1]}) | vecteur normal : ({orthogonal_vectors_matrix[x, y, 0]}, {orthogonal_vectors_matrix[x, y, 1]})")
-    data_term = np.abs(gradient_matrix[x, y, 0] * orthogonal_vectors_matrix[x, y, 0] + gradient_matrix[x, y, 1] * orthogonal_vectors_matrix[x, y, 1])
+    print(f" pixel : {pixel} | gradient : ({gradient_matrix[pixel_x, pixel_y, 0]}, {gradient_matrix[pixel_x, pixel_y, 1]}) | vecteur normal : ({orthogonal_vectors_matrix[pixel_x, pixel_y, 0]}, {orthogonal_vectors_matrix[pixel_x, pixel_y, 1]})")
+    data_term = np.abs(gradient_matrix[pixel_x, pixel_y, 0] * orthogonal_vectors_matrix[pixel_x, pixel_y, 0] + gradient_matrix[pixel_x, pixel_y, 1] * orthogonal_vectors_matrix[pixel_x, pixel_y, 1])
     data_term /= 255
     data_term *= 100
 
@@ -90,7 +90,7 @@ def front_orthogonal_vectors(target_region_mask):
 
 def pixel_with_max_priority(front_pixels_mask, image, target_region_mask, confidence_matrix, image_size, patch_size):
     orthogonal_vectors_matrix = front_orthogonal_vectors(target_region_mask)
-    gradient_matrix = compute_gradient(image * (1. - target_region_mask) + 255 * target_region_mask)
+    gradient_matrix = compute_gradient(image)
     orthogonal_to_gradient_matrix = np.zeros((image_size[0], image_size[1], 2))
     orthogonal_to_gradient_matrix[:, :, 0] = - gradient_matrix[:, :, 1]
     orthogonal_to_gradient_matrix[:, :, 1] = gradient_matrix[:, :, 0]
@@ -177,7 +177,7 @@ if __name__ == "__main__":
     #show_image(confidence_matrix, 'matrice de confiance initiale')
     #confidence_matrix = update_confidence(confidence_matrix, image_size, target_region_mask, patch_size)
     #show_image(confidence_matrix, 'matrice de confiance après une étape')
-    pixel_max, confidence, data_term, pixel_priority = pixel_with_max_priority(front_mask, img_array, target_region_mask, confidence_matrix, image_size[0], patch_size)
+    pixel_max, confidence, data_term, pixel_priority = pixel_with_max_priority(front_mask, img_array, target_region_mask, confidence_matrix, image_size, patch_size)
     print(f"pixel max trouvé : {pixel_max} | confiance : {confidence} | priorité : {pixel_priority}")
     show_image(confidence_matrix, "matrice de confiance avant")
     confidence_matrix = update_confidence(confidence_matrix, target_region_mask, pixel_max, confidence, patch_size, image_size)
