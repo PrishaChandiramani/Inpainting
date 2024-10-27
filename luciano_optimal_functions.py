@@ -24,7 +24,7 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
 
     data_term /= 255
 
-    return confidence, data_term, confidence
+    return confidence, data_term, confidence*data_term
 
 
 def update_confidence(confidence_matrix, target_region_mask, selected_pixel, selected_pixel_confidence, patch_size, image_size):

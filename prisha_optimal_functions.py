@@ -28,7 +28,7 @@ def choose_q_memory_optimization(target_region_mask, p,p_mask,im, patch_size):
     #psi_image.show()
     #print("psi.shape:",psi.shape)
     source_region_mask = np.logical_not(target_region_mask)
-    print("source_region_mask.shape:",source_region_mask.shape)
+    #print("source_region_mask.shape:",source_region_mask.shape)
     for i in range(source_region_mask.shape[0]-patch_size):
         for j in range(source_region_mask.shape[1]-patch_size):
             q_mask = source_region_mask[i:i+patch_size,j:j+patch_size]
@@ -50,7 +50,7 @@ def choose_q_memory_optimization(target_region_mask, p,p_mask,im, patch_size):
 def choose_q(target_region_mask, p, p_mask, im, patch_size):
     D = {}
     source_region_mask = np.logical_not(target_region_mask)
-    print("source_region_mask.shape:", source_region_mask.shape)
+    #print("source_region_mask.shape:", source_region_mask.shape)
     
     # Extract patches from the image and the mask
     patches = view_as_windows(im, (patch_size, patch_size))
@@ -115,7 +115,7 @@ def neighbour_to_source_region(x, y, target_region_mask):
 
 def front_detection(im, target_region_mask):
     # je vois pas comment optimiser celle-ci
-    print("in front_detection")
+    #print("in front_detection")
     if target_region_mask.shape != im.shape:
         raise ValueError('target_region_mask and im must have the same shape')
     if np.all(target_region_mask == np.array([[False for i in range(im.shape[0])] for j in range(im.shape[1])])):
@@ -149,12 +149,12 @@ def patch_search_compatible(target_region_mask, im, patch_size):
     half_patch_size = patch_size // 2
     confidence_matrix = 1. - np.copy(target_region_mask)
     while target_region_mask.any():
-        print("in while loop")
+        #print("in while loop")
         
         front = front_detection(new_matrix, target_region_mask)
         #lf.show_image(front, 'contour de la target region')
         pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, new_matrix, im_matrix, target_region_mask, confidence_matrix, im.shape, patch_size)
-        print(f"pixel : {pixel} | confidence : {confidence} | data term : {data_term} | priority : {priority}")
+        #print(f"pixel : {pixel} | confidence : {confidence} | data term : {data_term} | priority : {priority}")
         if target_region_mask[pixel[0],pixel[1]] == True:
             patch = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
             #print("patch_size:",patch_size)
@@ -173,7 +173,7 @@ def patch_search_compatible(target_region_mask, im, patch_size):
             
             #lf.show_image(confidence_matrix, "matrice de confiance à jour")
             target_region_mask = update_target_region_mask(target_region_mask, pixel, patch_size,new_matrix)
-            
+            print("pixels remaining : ", len(np.flatnonzero(target_region_mask)))
             #print("target_region_mask:",target_region_mask)  
             #new_matrix_image = Image.fromarray(new_matrix)
             #new_matrix_image.show()  
