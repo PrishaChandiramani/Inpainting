@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 from skimage.util import view_as_windows
-import luciano_functions as lf
+import luciano_optimal_functions.py as lf
 import time
 
 
