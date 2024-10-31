@@ -56,4 +56,23 @@ def test2():
 
     return True
 
-val = test2()
+def test3():
+    # test image papper
+    gray_image_matrix = ic.get_compressed_image("./images/test_image_1.png",2)
+    print("gray image matrix shape: ",gray_image_matrix.shape)
+
+    target_region_mask2 = np.array([[False for i in range(gray_image_matrix.shape[0])] for j in range(gray_image_matrix.shape[1])])
+    target_region_mask2[60:220,25:160] = True 
+
+    image_initiale_matrix = gray_image_matrix.copy()
+    image_initiale_matrix[60:220,25:160] = 255
+    image_initiale = Image.fromarray(image_initiale_matrix)
+    image_initiale.show()
+    test4 = pf.patch_search_compatible(target_region_mask2, gray_image_matrix, 9)
+    test4_image =Image.fromarray(test4)
+
+    test4_image.show()
+
+    return True
+
+val = test3()
