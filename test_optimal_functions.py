@@ -49,7 +49,7 @@ def test2():
     image_initiale_matrix[100:250,100:220] = 255
     image_initiale = Image.fromarray(image_initiale_matrix)
     image_initiale.show()
-    test4 = pf.patch_search_compatible(target_region_mask2, gray_image_matrix, 9)
+    test4 = pf.patch_search_compatible(target_region_mask2, gray_image_matrix, 15)
     test4_image =Image.fromarray(test4)
 
     test4_image.show()
