@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
 from scipy import signal
-from new_gradient import new_gradient
+from new_gradient import new_gradient, new_orthogonal_front_vector
 
 
 def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, new_image, front_orthogonal_vectors, orthogonal_to_gradient_matrix):
@@ -22,8 +22,9 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     if new:
         gradient = new_gradient(pixel, new_image, target_region_mask)
         orthogonal_to_gradient = [- gradient[1], gradient[0]]
-        front_orthogonal_vector = new_gradient(pixel, target_region_mask, target_region_mask)
+        front_orthogonal_vector = new_orthogonal_front_vector(pixel, target_region_mask)
         data_term = np.abs(orthogonal_to_gradient[0] * front_orthogonal_vector[0] + orthogonal_to_gradient[1] * front_orthogonal_vector[1])
+        #print("data term : ", data_term, " gradient : ", gradient, " orthogonal vector : ", front_orthogonal_vector)
     else:
         data_term = np.abs(orthogonal_to_gradient_matrix[pixel_x, pixel_y, 0] * front_orthogonal_vectors[pixel_x, pixel_y, 0] + orthogonal_to_gradient_matrix[pixel_x, pixel_y, 1] * front_orthogonal_vectors[pixel_x, pixel_y, 1])
     

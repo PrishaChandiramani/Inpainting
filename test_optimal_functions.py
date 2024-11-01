@@ -56,9 +56,9 @@ def test2(patch_size):
 
     return True
 
-print(test1())
+#print(test1())
 
-#val = test2(13)
+print(test2(13))
 #val2 = test2(11)
 #val3 = test2(9)
 #val4 = test2(7)
