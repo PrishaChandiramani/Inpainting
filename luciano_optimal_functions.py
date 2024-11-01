@@ -71,11 +71,14 @@ def list_front_pixels(front_pixels_mask):
 
 
 def pixel_with_max_priority(front_pixels_mask, new_image, original_image, target_region_mask, confidence_matrix, image_size, patch_size):
-    orthogonal_vectors_matrix = front_orthogonal_vectors(target_region_mask)
-    gradient_matrix = compute_gradient(new_image * (1. - target_region_mask) + original_image * target_region_mask)
+    
+    
+    #orthogonal_vectors_matrix = front_orthogonal_vectors(target_region_mask)
+    #gradient_matrix = compute_gradient(new_image * (1. - target_region_mask) + original_image * target_region_mask)
     orthogonal_to_gradient_matrix = np.zeros((image_size[0], image_size[1], 2))
-    orthogonal_to_gradient_matrix[:, :, 0] = - gradient_matrix[:, :, 1]
-    orthogonal_to_gradient_matrix[:, :, 1] = gradient_matrix[:, :, 0]
+    orthogonal_vectors_matrix = np.copy(orthogonal_to_gradient_matrix)
+    #orthogonal_to_gradient_matrix[:, :, 0] = - gradient_matrix[:, :, 1]
+    #orthogonal_to_gradient_matrix[:, :, 1] = gradient_matrix[:, :, 0]
     
     max_confidence = 0.
     max_data_term = 0.

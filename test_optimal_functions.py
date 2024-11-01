@@ -34,7 +34,7 @@ def test1():
 
 
 
-def test2():
+def test2(patch_size):
     #test avec nounours
     gray_image_matrix1 = ic.get_compressed_image("./images/filled_with_mask.png",3)
 
@@ -49,11 +49,16 @@ def test2():
     image_initiale_matrix[100:250,100:220] = 255
     image_initiale = Image.fromarray(image_initiale_matrix)
     image_initiale.show()
-    test4 = pf.patch_search_compatible(target_region_mask2, gray_image_matrix, 15)
+    test4 = pf.patch_search_compatible(target_region_mask2, gray_image_matrix, patch_size)
     test4_image =Image.fromarray(test4)
 
     test4_image.show()
 
     return True
 
-val = test2()
+print(test1())
+
+#val = test2(13)
+#val2 = test2(11)
+#val3 = test2(9)
+#val4 = test2(7)
