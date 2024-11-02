@@ -31,13 +31,19 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     
     data_term /= 255
 
-    return confidence, data_term, confidence*data_term
+    return confidence, data_term, confidence*(1 + data_term)
 
 
 def update_confidence(confidence_matrix, target_region_mask, selected_pixel, selected_pixel_confidence, patch_size, image_size):
     new_confidence_matrix = np.copy(confidence_matrix)
     half_patch_size = patch_size // 2
-    new_confidence_matrix[max(selected_pixel[0] - half_patch_size, 0): min(selected_pixel[0] + half_patch_size + 1, image_size[0] - 1),max(selected_pixel[1] - half_patch_size, 0): min(selected_pixel[1] + half_patch_size + 1, image_size[1] - 1)] = target_region_mask[max(selected_pixel[0] - half_patch_size, 0): min(selected_pixel[0] + half_patch_size + 1, image_size[0] - 1),max(selected_pixel[1] - half_patch_size, 0): min(selected_pixel[1] + half_patch_size + 1, image_size[1] - 1)]*selected_pixel_confidence + (1 - target_region_mask[max(selected_pixel[0] - half_patch_size, 0): min(selected_pixel[0] + half_patch_size + 1, image_size[0] - 1),max(selected_pixel[1] - half_patch_size, 0): min(selected_pixel[1] + half_patch_size + 1, image_size[1] - 1)])*confidence_matrix[max(selected_pixel[0] - half_patch_size, 0): min(selected_pixel[0] + half_patch_size + 1, image_size[0] - 1),max(selected_pixel[1] - half_patch_size, 0): min(selected_pixel[1] + half_patch_size + 1, image_size[1] - 1)] 
+    xmin = max(selected_pixel[0] - half_patch_size, 0)
+    xmax = min(selected_pixel[0] + half_patch_size + 1, image_size[0] - 1)
+    ymin = max(selected_pixel[1] - half_patch_size, 0)
+    ymax = min(selected_pixel[1] + half_patch_size + 1, image_size[1] - 1)
+    confidence_patch = (1 - target_region_mask[xmin:xmax, ymin:ymax]) * confidence_matrix[xmin:xmax, ymin:ymax]
+    new_confidence_patch = target_region_mask[xmin:xmax, ymin:ymax] * selected_pixel_confidence + confidence_patch
+    new_confidence_matrix[xmin:xmax, ymin:ymax] = new_confidence_patch
     return new_confidence_matrix
 
 def update_target_region_mask(target_region_mask, selected_pixel, patch_size,im):
@@ -140,3 +146,10 @@ def front_detection(im, target_region_mask):
                     front[x, y] = neighbour_to_source_region(x, y, target_region_mask)
         return front
     
+def show_patchs_chosen(pixel, p_patch, q_patch):
+    fig, axs = plt.subplots(1, 2)
+    axs[0].imshow(p_patch, cmap='grey', vmin=0, vmax=255)
+    axs[0].set_title(f"patch to replace (pixel = {pixel})")
+    axs[1].imshow(q_patch, cmap='grey', vmin=0, vmax=255)
+    axs[1].set_title("patch chosen")
+    plt.show()

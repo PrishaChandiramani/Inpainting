@@ -5,6 +5,7 @@ import image_compression as ic
 
 import numpy as np
 from PIL import Image
+import matplotlib.pyplot as plt
 
 
 
@@ -56,9 +57,31 @@ def test2(patch_size):
 
     return True
 
-#print(test1())
+def test3():
+    # test texte
+    image = Image.open("./images/test_text.png")
+    image_matrix = np.array(image)
+    gray_image = image.convert("L")
+    gray_image_matrix = np.array(gray_image)
+    print("gray image matrix shape: ",gray_image_matrix.shape)
 
-print(test2(9))
+    target_region_mask2 = np.array([[gray_image_matrix[i, j] > 127 for j in range(gray_image_matrix.shape[1])] for i in range(gray_image_matrix.shape[0])])
+    plt.imshow(target_region_mask2)
+    plt.show()
+
+    image_initiale_matrix = gray_image_matrix.copy()
+    image_initiale = Image.fromarray(image_initiale_matrix)
+    #image_initiale.show()
+    test3 = pf.patch_search_compatible(target_region_mask2, gray_image_matrix, 5)
+    test3_image =Image.fromarray(test3)
+
+    test3_image.show()
+
+    return True
+
+print(test3())
+
+#print(test2(9))
 #val2 = test2(11)
 #val3 = test2(9)
 #val4 = test2(7)
