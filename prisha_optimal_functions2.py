@@ -2,8 +2,6 @@ from PIL import Image
 import numpy as np
 from skimage.util import view_as_windows
 import luciano_optimal_functions2 as lf
-#import luciano_optimal_functions as lf
-#import luciano_optimal_functions3 as lf
 import time
 
 
@@ -20,15 +18,20 @@ def calcul_dist(p,q, p_mask):
     diff = p_masked - q_masked
     sum = np.sum(diff ** 2)
     return sum
-def calcul_dist_couleur(p,q,p_mask):
+
+def calcul_dist_color(p,q, p_mask):
+   # dans p, il peut y avoir des valeurs à None
+   #p_mask[i,j] = True si il faut prendre la valeur du pixel dans p qu'elle n'est pas vide
+   # si p_mask a que des valeurs à False, on ne fait rien, donc la distance est nulle, c'est à dire que le pixel q est parfait, problème à gérer, est qu'on commence à sum = -1 ?  
+
     if p.shape != q.shape:
         raise ValueError("Les deux patchs n'ont pas la même taille")
-    p_masked = p*p_mask
-    q_masked = q*p_mask
+    p_masked = p*p_mask[...,np.newaxis]
+    q_masked = q*p_mask[...,np.newaxis]
     # Cast to float64 to prevent overflow
     diff = p_masked - q_masked
-    sum = np.sum(diff ** 2)
-    return sum
+    sum = np.sum(diff ** 2, axis=(0,1))
+    return np.sum(sum)
 
 #memory optimization
 def choose_q_memory_optimization(target_region_mask, p,p_mask,im, patch_size):
@@ -57,12 +60,41 @@ def choose_q_memory_optimization(target_region_mask, p,p_mask,im, patch_size):
 
     return q_opt 
 
-# time optimization
-def choose_q(target_region_mask, p, p_mask, im, patch_size):
+def choose_q_original(target_region_mask, front, p, p_mask, im, patch_size):
     D = {}
-    margin = 25
+    margin = 20
     source_region_mask = np.logical_not(target_region_mask)
     print("source_region_mask.shape:", source_region_mask.shape)
+
+    # Extract patches from the image and the mask
+    patches = view_as_windows(im, (patch_size, patch_size))
+    mask_patches = view_as_windows(source_region_mask, (patch_size, patch_size))
+    
+    # Flatten the patches for easier processing
+    patches = patches.reshape(-1, patch_size, patch_size)
+    mask_patches = mask_patches.reshape(-1, patch_size, patch_size)
+    
+    # Filter valid patches
+    for idx, mask in enumerate(mask_patches):
+        if np.all(mask):
+            patch = patches[idx]
+            d = calcul_dist(p, patch, p_mask)
+            i, j = np.unravel_index(idx, (source_region_mask.shape[0] - patch_size + 1, source_region_mask.shape[1] - patch_size + 1))
+            D[(i , j )] = d
+    #print(D)
+    # Find the patch with the minimum distance
+    minimum_D = min(D, key=D.get)  # Returns the key of the minimum value
+    q_opt = im[minimum_D[0]:minimum_D[0] + patch_size, minimum_D[1]:minimum_D[1] + patch_size]
+
+    return q_opt
+
+# time optimization
+def choose_q(target_region_mask, front, p, p_mask, im, patch_size):
+    D = {}
+    margin = 20
+    source_region_mask = np.logical_not(target_region_mask)
+    print("source_region_mask.shape:", source_region_mask.shape)
+
     #Define the limits of the target region
     target_indices = np.argwhere(target_region_mask)
     min_x, min_y = target_indices.min(axis=0)
@@ -77,6 +109,9 @@ def choose_q(target_region_mask, p, p_mask, im, patch_size):
     #Extract the source region from the image
     source_region = im[min_x:max_x, min_y:max_y]
     source_region_mask = source_region_mask[min_x:max_x, min_y:max_y]
+
+
+    
     # Extract patches from the image and the mask
     patches = view_as_windows(source_region, (patch_size, patch_size))
     mask_patches = view_as_windows(source_region_mask, (patch_size, patch_size))
@@ -113,8 +148,8 @@ def update_target_region_mask(target_region_mask, selected_pixel, patch_size,im)
 def neighbour_to_source_region(x, y, target_region_mask):
     source_region_mask = 1. - target_region_mask
     number_of_source_region_neighours = 0
-    if x > 0 and x < target_region_mask.shape[0]-1:
-        if y > 0 and y < target_region_mask.shape[1]-1:
+    if x > 0 and x < target_region_mask.shape[0]:
+        if y > 0 and y < target_region_mask.shape[1]:
             number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x + 1, y] + source_region_mask[x, y - 1] + source_region_mask[x, y + 1]
         elif y == 0:
             number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x + 1, y] + source_region_mask[x, y + 1]
@@ -143,10 +178,10 @@ def front_detection(im, target_region_mask):
     print("in front_detection")
     if target_region_mask.shape != im.shape:
         raise ValueError('target_region_mask and im must have the same shape')
-    if np.all(target_region_mask == np.array([[False for i in range(im.shape[0])] for j in range(im.shape[1])])):
+    if np.all(target_region_mask == np.array([[False for i in range(im.shape[1])] for j in range(im.shape[0])])):
         return ("No target region")
     else : 
-        front = np.array([[False for i in range(im.shape[0])] for j in range(im.shape[1])])
+        front = np.array([[False for i in range(im.shape[1])] for j in range(im.shape[0])])
         new_im = np.copy(im)
         for x in range(im.shape[0]):
             for y in range(im.shape[1]):
@@ -178,79 +213,20 @@ def patch_search_compatible(target_region_mask, im, patch_size):
         
         front = front_detection(new_matrix, target_region_mask)
         #lf.show_image(front, 'contour de la target region')
-        #pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, new_matrix, target_region_mask, confidence_matrix, im.shape, patch_size)
         pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, new_matrix, im,target_region_mask, confidence_matrix, im.shape, patch_size)
         print(f"pixel : {pixel} | confidence : {confidence} | data term : {data_term} | priority : {priority}")
         if target_region_mask[pixel[0],pixel[1]] == True:
-
-            
-            patch = np.array([[0 for i in range(2*half_patch_size + 1)] for j in range (2*half_patch_size +1)])
-            patch_mask = np.array([[False for i in range(2*half_patch_size +1)] for j in range (2*half_patch_size+1)])
-            print("patch_mask.shape:",patch_mask.shape)
-            print("patch.shape:",patch.shape)
-            
-            if pixel[0] - half_patch_size < 0:
-                if pixel[1] - half_patch_size < 0:
-                    patch[half_patch_size:,half_patch_size:] = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-                    patch_mask[half_patch_size:,half_patch_size:] = target_region_mask[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-                elif pixel[1] + half_patch_size >= im.shape[1]:
-                    patch[half_patch_size:,:im.shape[1]-half_patch_size-pixel[1]-2] = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-                    patch_mask[half_patch_size:,:im.shape[1]-half_patch_size-pixel[1]-2] = target_region_mask[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-                else :
-                    patch[half_patch_size:,:] = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-                    patch_mask[half_patch_size:,:] = target_region_mask[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-            elif pixel[0] + half_patch_size >= im.shape[0]:
-                if pixel[1] - half_patch_size < 0:
-                    patch[:im.shape[0]-half_patch_size-pixel[0]-2,half_patch_size:] = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-                    patch_mask[:im.shape[0]-half_patch_size-pixel[0]-2,half_patch_size:] = target_region_mask[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-                elif pixel[1] + half_patch_size >= im.shape[1]:
-                    patch[:im.shape[0]-half_patch_size-pixel[0]-2,:im.shape[1]-half_patch_size-pixel[1]-2] = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-                    patch_mask[:im.shape[0]-half_patch_size-pixel[0]-2,:im.shape[1]-half_patch_size-pixel[1]-2] = target_region_mask[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-                else :
-                    patch[:im.shape[0]-half_patch_size-pixel[0]-2,:] = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-                    patch_mask[:im.shape[0]-half_patch_size-pixel[0]-2,:] = target_region_mask[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-            else:
-                patch = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
+            patch = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
             #print("patch_size:",patch_size)
             #print("patch:", patch)
             #print("patch.shape:",patch.shape)
-                patch_mask = target_region_mask[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
-            # on met à False les valeurs de patch_mask qui correspondent à des valeurs de target_region_mask à True
-            
-            patch = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
             patch_mask = target_region_mask[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)]
+            # on met à False les valeurs de patch_mask qui correspondent à des valeurs de target_region_mask à True
             patch_mask = np.logical_not(patch_mask)
             #print("patch_mask.shape:",patch_mask.shape)
             #print("patch_mask:",patch_mask)
-            print(patch.shape)
-            print(patch_mask.shape)
-
-            q_patch = choose_q(target_region_mask, patch,  patch_mask, new_matrix, patch_size)
+            q_patch = choose_q(target_region_mask, front, patch,  patch_mask, new_matrix, patch_size)
             #print("q_patch:",q_patch)
-            
-            if pixel[0] - half_patch_size < 0:
-                if pixel[1] - half_patch_size < 0:
-                    new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch[half_patch_size:,half_patch_size:]
-                    
-                elif pixel[1] + half_patch_size >= im.shape[1]:
-                    new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch[half_patch_size:,:im.shape[1]-half_patch_size-pixel[1]-2] 
-                else :
-                    new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch[half_patch_size:,:]
-                    
-            elif pixel[0] + half_patch_size >= im.shape[0]:
-                if pixel[1] - half_patch_size < 0:
-                    new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch[:im.shape[0]-half_patch_size-pixel[0]-2,half_patch_size:]
-                    
-                elif pixel[1] + half_patch_size >= im.shape[1]:
-                    new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch[:im.shape[0]-half_patch_size-pixel[0]-2,:im.shape[1]-half_patch_size-pixel[1]-2]
-                    
-                else :
-                    new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch[:im.shape[0]-half_patch_size-pixel[0]-2,:] 
-                    
-            else:
-            
-                new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch
-            
             new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch
             #new_matrix = update_matrix(q_patch, target_region_mask, pixel, half_patch_size, new_matrix)
             confidence_matrix = lf.update_confidence(confidence_matrix, target_region_mask, pixel, confidence, patch_size, im.shape)

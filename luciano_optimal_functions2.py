@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
 from scipy import signal
+from new_gradient2 import new_gradient, new_orthogonal_front_vector
 
 
-def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, gradient_matrix, orthogonal_vectors_matrix):
-    
+def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, new_image, front_orthogonal_vectors, orthogonal_to_gradient_matrix):
+    new = True
     # Calcul du terme de confiance
     confidence = 0
     pixel_x, pixel_y = pixel[0], pixel[1]
@@ -14,16 +15,21 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     mat = confidence_matrix[max(pixel_x - half_patch_size, 0): min(pixel_x + half_patch_size + 1, image_size[0] - 1), max(pixel_y - half_patch_size, 0) : min(pixel_y + half_patch_size + 1, image_size[1] - 1)]
     confidence = np.sum(mat)
 
-    #print(confidence_matrix[max(pixel_x - half_patch_size, 0): min(pixel_x + half_patch_size + 1, image_size[0] - 1), max(pixel_y - half_patch_size, 0) : min(pixel_y + half_patch_size + 1, image_size[1] - 1)])
     confidence /= patch_size*patch_size
-    #confidence *= 10
-
+    
     # Calcul du terme de données
-    #print(f" pixel : {pixel} | gradient : ({gradient_matrix[x, y, 0]}, {gradient_matrix[x, y, 1]}) | vecteur normal : ({orthogonal_vectors_matrix[x, y, 0]}, {orthogonal_vectors_matrix[x, y, 1]})")
-    data_term = np.abs(gradient_matrix[pixel_x, pixel_y, 0] * orthogonal_vectors_matrix[pixel_x, pixel_y, 0] + gradient_matrix[pixel_x, pixel_y, 1] * orthogonal_vectors_matrix[pixel_x, pixel_y, 1]) + 0.001 # pour éviter un data term null
-
+    
+    if new:
+        gradient = new_gradient(pixel, new_image, target_region_mask)
+        orthogonal_to_gradient = [- gradient[1], gradient[0]]
+        front_orthogonal_vector = new_orthogonal_front_vector(pixel, target_region_mask)
+        data_term = np.abs(orthogonal_to_gradient[0] * front_orthogonal_vector[0] + orthogonal_to_gradient[1] * front_orthogonal_vector[1])
+        #print("data term : ", data_term, " gradient : ", gradient, " orthogonal vector : ", front_orthogonal_vector)
+    else:
+        data_term = np.abs(orthogonal_to_gradient_matrix[pixel_x, pixel_y, 0] * front_orthogonal_vectors[pixel_x, pixel_y, 0] + orthogonal_to_gradient_matrix[pixel_x, pixel_y, 1] * front_orthogonal_vectors[pixel_x, pixel_y, 1])
+    
+    
     data_term /= 255
-    data_term *= 100
 
     return confidence, data_term, confidence*data_term
 
@@ -65,21 +71,25 @@ def list_front_pixels(front_pixels_mask):
     return non_null_indices_list
 
 
-def pixel_with_max_priority(front_pixels_mask, image, target_region_mask, confidence_matrix, image_size, patch_size):
-    orthogonal_vectors_matrix = front_orthogonal_vectors(target_region_mask)
-    gradient_matrix = compute_gradient(image * (1. - target_region_mask) + 255 * target_region_mask)
+def pixel_with_max_priority(front_pixels_mask, new_image, original_image, target_region_mask, confidence_matrix, image_size, patch_size):
+    
+    
+    #orthogonal_vectors_matrix = front_orthogonal_vectors(target_region_mask)
+    #gradient_matrix = compute_gradient(new_image * (1. - target_region_mask) + original_image * target_region_mask)
     orthogonal_to_gradient_matrix = np.zeros((image_size[0], image_size[1], 2))
-    orthogonal_to_gradient_matrix[:, :, 0] = - gradient_matrix[:, :, 1]
-    orthogonal_to_gradient_matrix[:, :, 1] = gradient_matrix[:, :, 0]
+    orthogonal_vectors_matrix = np.copy(orthogonal_to_gradient_matrix)
+    #orthogonal_to_gradient_matrix[:, :, 0] = - gradient_matrix[:, :, 1]
+    #orthogonal_to_gradient_matrix[:, :, 1] = gradient_matrix[:, :, 0]
+    
     max_confidence = 0.
     max_data_term = 0.
     max_priority = 0.
 
     front_pixels_list = list_front_pixels(front_pixels_mask)
-    print(f"front pixels list : {front_pixels_list}")
+    #print(f"front pixels list : {front_pixels_list}")
     pixel_max = front_pixels_list[0]
     for pixel in front_pixels_list:
-        pixel_confidence, pixel_data_term, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, orthogonal_to_gradient_matrix, orthogonal_vectors_matrix)
+        pixel_confidence, pixel_data_term, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, new_image, orthogonal_vectors_matrix, orthogonal_to_gradient_matrix)
         #print(f"-- pixel : {pixel} | confidence : {pixel_confidence} | data term : {pixel_data_term} | priority : {pixel_priority}")
         if pixel_priority > max_priority:
             max_priority = pixel_priority
