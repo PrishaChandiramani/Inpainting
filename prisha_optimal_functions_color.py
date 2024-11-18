@@ -186,8 +186,8 @@ def front_detection(im, target_region_mask,patch_size):
     else : 
         front = np.array([[False for i in range(im.shape[1])] for j in range(im.shape[0])])
         #new_im = np.copy(im)
-        for x in range(im.shape[0]):
-            for y in range(im.shape[1]):
+        for x in range(patch_size2,im.shape[0]-patch_size2):
+            for y in range(patch_size2,im.shape[1]-patch_size2):
                 if target_region_mask[x, y,0]:
                     front[x, y] = neighbour_to_source_region(x, y, target_region_mask)
         return front

@@ -175,11 +175,11 @@ def test7():
     print(" image matrix shape: ",image_matrix.shape)
 
     target_region_mask2 = np.array([[[False] for i in range(image_matrix.shape[1])] for j in range(image_matrix.shape[0])])
-    target_region_mask2[100:237,15:130,0] = True 
+    target_region_mask2[100:240,15:130,0] = True 
     print("target_region_mask.shape : ",target_region_mask2.shape)
 
     image_initiale_matrix = image_matrix.copy()
-    image_initiale_matrix[100:237,15:130] = 255
+    image_initiale_matrix[100:240,15:130] = 255
     image_initiale = Image.fromarray(image_initiale_matrix)
     image_initiale.show()
     test4 = pc.patch_search_compatible(target_region_mask2, image_matrix, 9)
@@ -234,7 +234,7 @@ def test_neighbours():
 
 #a = test_calcul_dist_couleur()
 #print(a)
-val = test8()
+val = test7()
 
 #mask = Image.open("./images/mask5.jpg")
 #target_region = mask.convert("L")
