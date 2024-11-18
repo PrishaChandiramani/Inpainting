@@ -54,10 +54,11 @@ def choose_q_original(target_region_mask, front, p, p_mask, im, patch_size):
 def choose_q(target_region_mask, front, p, p_mask, im, patch_size):
     D = {}
     margin = 50
+    patch_size2 = patch_size//2
     source_region_mask = np.logical_not(target_region_mask)
     print("source_region_mask.shape:", source_region_mask.shape)
 
-    """"
+    
     #Define the limits of the target region
     target_indices = np.argwhere(target_region_mask)
     min_x, min_y,min_z = target_indices.min(axis=0)
@@ -66,9 +67,9 @@ def choose_q(target_region_mask, front, p, p_mask, im, patch_size):
 
     #Define the limits of the source region with a margin
     min_x = max(0,min_x - margin)
-    max_x = min(source_region_mask.shape[0],max_x + margin + patch_size)
+    max_x = min(source_region_mask.shape[0]- patch_size,max_x + margin + patch_size)
     min_y = max(0,min_y - margin)
-    max_y = min(source_region_mask.shape[1],max_y + margin + patch_size)
+    max_y = min(source_region_mask.shape[1]-patch_size,max_y + margin + patch_size)
     print("min_x, max_x, min_y, max_y:", min_x, max_x, min_y, max_y)
 
     #Extract the source region from the image
@@ -77,8 +78,18 @@ def choose_q(target_region_mask, front, p, p_mask, im, patch_size):
     print("source_region.shape:", source_region.shape)
     print("new_source_region_mask.shape:", new_source_region_mask.shape)
 
-
+    for i in range(min_x,max_x):
+        for j in range(min_y,max_y):
+            q_mask = source_region_mask[i:i+patch_size,j:j+patch_size]
+            valid_patch = np.all(q_mask)
+            if valid_patch:
+                q = im[i:i+patch_size,j:j+patch_size]
+                d = calcul_dist_color(p, q, p_mask)
+                D[(i,j)] = d
     
+
+
+    """
     # Extract patches from the image and the mask
     patches = view_as_windows(source_region, (patch_size, patch_size,3))
     mask_patches = view_as_windows(new_source_region_mask, (patch_size, patch_size,1))
@@ -93,9 +104,10 @@ def choose_q(target_region_mask, front, p, p_mask, im, patch_size):
     print(mask_patches.shape)
     """
 
+
     
     
-    
+    """
    # Extract patches from the image and the mask
     patches = view_as_windows(im, (patch_size, patch_size,3))
     mask_patches = view_as_windows(source_region_mask, (patch_size, patch_size,1))
@@ -103,19 +115,20 @@ def choose_q(target_region_mask, front, p, p_mask, im, patch_size):
     # Flatten the patches for easier processing
     patches = patches.reshape(-1, patch_size, patch_size,3)
     mask_patches = mask_patches.reshape(-1, patch_size, patch_size,1)
+    """
     
     
-    
-
+    """
     # Filter valid patches
     for idx, mask in enumerate(mask_patches):
         if np.all(mask):
             patch = patches[idx]
             d = calcul_dist_color(p, patch, p_mask)
-            #i, j = np.unravel_index(idx, (new_source_region_mask.shape[0] - patch_size + 1, new_source_region_mask.shape[1] - patch_size + 1))
-            i, j = np.unravel_index(idx, (source_region_mask.shape[0] - patch_size + 1, source_region_mask.shape[1] - patch_size + 1))
-            #D[(i + min_x, j + min_y)] = d
-            D[(i,j)] = d
+            i, j = np.unravel_index(idx, (new_source_region_mask.shape[0] - patch_size + 1, new_source_region_mask.shape[1] - patch_size + 1))
+            #i, j = np.unravel_index(idx, (source_region_mask.shape[0] - patch_size + 1, source_region_mask.shape[1] - patch_size + 1))
+            D[(i + min_x, j + min_y)] = d
+            #D[(i,j)] = d
+    """
     #print(D)
     # Find the patch with the minimum distance
     minimum_D = min(D, key=D.get)  # Returns the key of the minimum value
@@ -162,9 +175,10 @@ def neighbour_to_source_region(x, y, target_region_mask):
 
 
 
-def front_detection(im, target_region_mask):
+def front_detection(im, target_region_mask,patch_size):
     # je vois pas comment optimiser celle-ci
     print("in front_detection")
+    patch_size2 = patch_size//2
     #if target_region_mask.shape != im.shape:
     #    raise ValueError('target_region_mask and im must have the same shape')
     if np.all(target_region_mask == np.array([[[False] for i in range(im.shape[1])] for j in range(im.shape[0])])):
@@ -200,7 +214,7 @@ def patch_search_compatible(target_region_mask, im, patch_size):
     while target_region_mask.any():
         print("in while loop")
         
-        front = front_detection(new_matrix, target_region_mask)
+        front = front_detection(new_matrix, target_region_mask,patch_size)
         #print("front:", front)
         #lf.show_image(front, 'contour de la target region')
         pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, new_matrix, im,target_region_mask, confidence_matrix, im.shape, patch_size)

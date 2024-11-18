@@ -2,10 +2,12 @@ import prisha_optimal_functions2 as pf
 import prisha_optimal_functions_color as pc
 
 import image_compression as ic
+import color_compression as cc
 
 
 import numpy as np
 from PIL import Image
+from scipy.ndimage import gaussian_filter
 
 from skimage.morphology import binary_dilation
 
@@ -161,18 +163,23 @@ def test7():
 
     # test image paper
     image = Image.open("./images/image1.jpg")
-    image_matrix = np.array(image)
-    print(" image matrix shape: ",image_matrix.shape)
-
+    image_matrix1 = np.array(image)
     
-
+    image_matrix2 = cc.compression(image_matrix1,2)
+    image_matrix = gaussian_filter(image_matrix2,1)
     print(" image matrix shape: ",image_matrix.shape)
+    
+    image_matrix = np.clip(image_matrix,0,255).astype(np.uint8)
+    compressed_image = Image.fromarray(image_matrix)
+    compressed_image.show()
+    print(" image matrix shape: ",image_matrix.shape)
+
     target_region_mask2 = np.array([[[False] for i in range(image_matrix.shape[1])] for j in range(image_matrix.shape[0])])
-    target_region_mask2[200:470,40:290,0] = True 
+    target_region_mask2[100:237,15:130,0] = True 
     print("target_region_mask.shape : ",target_region_mask2.shape)
 
     image_initiale_matrix = image_matrix.copy()
-    image_initiale_matrix[200:470,40:290] = 255
+    image_initiale_matrix[100:237,15:130] = 255
     image_initiale = Image.fromarray(image_initiale_matrix)
     image_initiale.show()
     test4 = pc.patch_search_compatible(target_region_mask2, image_matrix, 9)
@@ -227,7 +234,7 @@ def test_neighbours():
 
 #a = test_calcul_dist_couleur()
 #print(a)
-val = test7()
+val = test8()
 
 #mask = Image.open("./images/mask5.jpg")
 #target_region = mask.convert("L")
