@@ -46,6 +46,12 @@ def update_confidence(confidence_matrix, target_region_mask, selected_pixel, sel
     new_confidence_matrix[xmin:xmax, ymin:ymax] = new_confidence_patch
     return new_confidence_matrix
 
+def update_confidence_1_pixel(confidence_matrix, target_region_mask, selected_pixel, selected_pixel_confidence, patch_size, image_size):
+    new_confidence_matrix = np.copy(confidence_matrix)
+    
+    new_confidence_matrix[selected_pixel[0], selected_pixel[1]] = selected_pixel_confidence
+    return new_confidence_matrix
+
 def update_target_region_mask(target_region_mask, selected_pixel, patch_size,im):
     #print("in update_target_region_mask")
     updated_matrix = target_region_mask.copy()

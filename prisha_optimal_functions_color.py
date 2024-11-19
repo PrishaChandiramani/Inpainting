@@ -53,7 +53,7 @@ def choose_q_original(target_region_mask, front, p, p_mask, im, patch_size):
 # time optimization
 def choose_q(target_region_mask, front, p, p_mask, im, patch_size):
     D = {}
-    margin = 50
+    margin = 70
     patch_size2 = patch_size//2
     source_region_mask = np.logical_not(target_region_mask)
     print("source_region_mask.shape:", source_region_mask.shape)
@@ -146,6 +146,14 @@ def update_target_region_mask(target_region_mask, selected_pixel, patch_size,im)
     updated_matrix [max(selected_pixel[0] - half_patch_size, 0): min(selected_pixel[0] + half_patch_size + 1, im.shape[0] - 1),max(selected_pixel[1] - half_patch_size, 0): min(selected_pixel[1] + half_patch_size + 1 , im.shape[1] - 1)]= np.array([[[False] for i in range (patch_size)] for j in range(patch_size)])
     return updated_matrix
 
+def update_target_region_mask_1_pixel(target_region_mask, selected_pixel, patch_size,im):
+    #print("in update_target_region_mask_1_pixel")
+    updated_matrix = target_region_mask.copy()
+    
+    updated_matrix[selected_pixel[0],selected_pixel[1],0] = False
+    
+    return updated_matrix
+
 
 def neighbour_to_source_region(x, y, target_region_mask):
     source_region_mask = ~target_region_mask
@@ -231,15 +239,21 @@ def patch_search_compatible(target_region_mask, im, patch_size):
             #print("patch_mask:",patch_mask)
             q_patch = choose_q(target_region_mask, front, patch,  patch_mask, new_matrix, patch_size)
             #print("q_patch:",q_patch)
-            new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch
-            #new_matrix = update_matrix(q_patch, target_region_mask, pixel, half_patch_size, new_matrix)
-            confidence_matrix = lf.update_confidence(confidence_matrix, target_region_mask, pixel, confidence, patch_size, im.shape)
             
+            #bonne ligne
+            new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch*(1-patch_mask) + patch*patch_mask
+            #new_matrix[pixel[0],pixel[1]] = q_patch[half_patch_size,half_patch_size]
+            #new_matrix = update_matrix(q_patch, target_region_mask, pixel, half_patch_size, new_matrix)
+            
+            confidence_matrix = lf.update_confidence(confidence_matrix, target_region_mask, pixel, confidence, patch_size, im.shape)
+            #confidence_matrix[pixel[0],pixel[1]] = confidence
             #lf.show_image(confidence_matrix, "matrice de confiance à jour")
+            
             target_region_mask = update_target_region_mask(target_region_mask, pixel, patch_size,new_matrix)
+            #target_region_mask[pixel[0],pixel[1],0] = False
             
             #print("target_region_mask:",target_region_mask)  
-            #new_matrix_image = Image.fromarray(new_matrix)
-            #new_matrix_image.show()  
+            new_matrix_image = Image.fromarray(new_matrix)
+            new_matrix_image.show()  
     new_matrix = new_matrix.astype(np.uint8)        
     return new_matrix

@@ -175,7 +175,7 @@ def test7():
     print(" image matrix shape: ",image_matrix.shape)
 
     target_region_mask2 = np.array([[[False] for i in range(image_matrix.shape[1])] for j in range(image_matrix.shape[0])])
-    target_region_mask2[100:240,15:130,0] = True 
+    target_region_mask2[100:237,15:130,0] = True 
     print("target_region_mask.shape : ",target_region_mask2.shape)
 
     image_initiale_matrix = image_matrix.copy()
