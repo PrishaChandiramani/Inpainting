@@ -11,7 +11,11 @@ def region3x3(x, y, img, target_region_mask, depth):
     xmax = int(x + 1 % size_x)
     ymin = int(y - 1 % size_y)
     ymax = int(y + 1 % size_y)
-    local_target_region_mask = target_region_mask[xmin:xmax + 1, ymin:ymax + 1]
+    local_target_region_mask = np.array([
+        [target_region_mask[xmin, ymin], target_region_mask[x, ymin], target_region_mask[xmax, ymin]],
+        [target_region_mask[xmin, y], target_region_mask[x, y], target_region_mask[xmax, y]],
+        [target_region_mask[xmin, ymax], target_region_mask[x, ymax], target_region_mask[xmax, ymax]]
+    ])
     if np.any(local_target_region_mask) and depth > 0:
         
         x_matrix = np.array([[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
@@ -21,7 +25,11 @@ def region3x3(x, y, img, target_region_mask, depth):
         new_y = int(y + np.sign(np.sum(y_matrix * local_target_region_mask)))
         return region3x3(new_x, new_y, img, target_region_mask, depth-1)
     else:
-        result = np.array([[img[xmin, ymin], img[xmin, y], img[xmin, ymax]], [img[x, ymin], img[x, y], img[x, ymax]], [img[xmax, ymin], img[xmax, y], img[xmax, ymax]]])
+        result = np.array([
+            [img[xmin, ymin], img[xmin, y], img[xmin, ymax]], 
+            [img[x, ymin], img[x, y], img[x, ymax]], 
+            [img[xmax, ymin], img[xmax, y], img[xmax, ymax]]
+        ])
         return result
     
 def new_gradient(pixel, image, target_region_mask):
