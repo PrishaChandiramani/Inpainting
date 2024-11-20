@@ -79,7 +79,7 @@ def test3():
 
     return True
 
-print(test3())
+print(test2(13))
 
 #print(test2(9))
 #val2 = test2(11)
