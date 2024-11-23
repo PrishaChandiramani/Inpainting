@@ -175,14 +175,14 @@ def test7():
     print(" image matrix shape: ",image_matrix.shape)
 
     target_region_mask2 = np.array([[[False] for i in range(image_matrix.shape[1])] for j in range(image_matrix.shape[0])])
-    target_region_mask2[100:237,15:130,0] = True 
+    target_region_mask2[115:230,15:130,0] = True 
     print("target_region_mask.shape : ",target_region_mask2.shape)
 
     image_initiale_matrix = image_matrix.copy()
-    image_initiale_matrix[100:240,15:130] = 255
+    image_initiale_matrix[100:230,15:130] = 255
     image_initiale = Image.fromarray(image_initiale_matrix)
     image_initiale.show()
-    test4 = pc.patch_search_compatible(target_region_mask2, image_matrix, 9)
+    test4 = pc.patch_search_compatible(target_region_mask2, image_matrix, 15)
     test4_image =Image.fromarray(test4)
 
     test4_image.show()
@@ -230,11 +230,71 @@ def test_neighbours():
     return True
 
 
+def test9():
+    image = Image.open("./images/filled_with_mask.png")
+    image_matrix1 = np.array(image)
+    
+    image_matrix2 = cc.compression(image_matrix1,2)
+    image_matrix = gaussian_filter(image_matrix2,1)
+    print(" image matrix shape: ",image_matrix.shape)
+    
+    image_matrix = np.clip(image_matrix,0,255).astype(np.uint8)
+    compressed_image = Image.fromarray(image_matrix)
+    compressed_image.show()
+    print(" image matrix shape: ",image_matrix.shape)
+
+    target_region_mask2 = np.array([[[False] for i in range(image_matrix.shape[1])] for j in range(image_matrix.shape[0])])
+    target_region_mask2[167:370,300:440,0] = True 
+    print("target_region_mask.shape : ",target_region_mask2.shape)
+
+    image_initiale_matrix = image_matrix.copy()
+    image_initiale_matrix[167:370,300:440] = 255
+    image_initiale = Image.fromarray(image_initiale_matrix)
+    image_initiale.show()
+    test4 = pc.patch_search_compatible(target_region_mask2, image_matrix, 17)
+    test4_image =Image.fromarray(test4)
+
+    test4_image.show()
+
+    return True
+
+def test10():
+    image=Image.open("./images/image4.jpg")
+    image_matrix1 = np.array(image)
+    image_matrix = image_matrix1[79:386,68:273]
+    print(" image matrix shape: ",image_matrix.shape)
+    mask = Image.open("./images/mask4.jpg")
+    mask_matrix1 = np.array(mask)
+    mask_matrix = np.array([[[False] for i in range(mask_matrix1.shape[1])] for j in range(mask_matrix1.shape[0])])
+    for i in range(mask_matrix.shape[0]):
+        for j in range(mask_matrix.shape[1]):
+            if mask_matrix1[i,j,0] > 0:
+                mask_matrix[i,j,0] = True
+    mask_matrix[50:70,60:140] = True
+    print(" mask matrix shape: ",mask_matrix.shape)
+
+    
+    new_matrix = image_matrix*mask_matrix
+    print(mask_matrix)
+    new_image = Image.fromarray(new_matrix)
+    new_image.show()
+
+    test = pc.patch_search_compatible(mask_matrix, image_matrix, 13)
+    test_image =Image.fromarray(test4)
+
+    test_image.show()
+    
+
+    return True
+
+
+
+
 
 
 #a = test_calcul_dist_couleur()
 #print(a)
-val = test7()
+val = test8()
 
 #mask = Image.open("./images/mask5.jpg")
 #target_region = mask.convert("L")

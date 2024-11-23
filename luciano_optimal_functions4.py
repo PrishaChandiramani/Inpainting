@@ -23,15 +23,15 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
         gradient = new_gradient(pixel, new_image, target_region_mask)
         orthogonal_to_gradient = [- gradient[1], gradient[0]]
         front_orthogonal_vector = new_orthogonal_front_vector(pixel, target_region_mask)
-        data_term = np.abs(orthogonal_to_gradient[0] * front_orthogonal_vector[0] + orthogonal_to_gradient[1] * front_orthogonal_vector[1])
+        data_term = np.abs(orthogonal_to_gradient[0] * front_orthogonal_vector[0] + orthogonal_to_gradient[1] * front_orthogonal_vector[1]) + 0.001
         #print("data term : ", data_term, " gradient : ", gradient, " orthogonal vector : ", front_orthogonal_vector)
     else:
-        data_term = np.abs(orthogonal_to_gradient_matrix[pixel_x, pixel_y, 0] * front_orthogonal_vectors[pixel_x, pixel_y, 0] + orthogonal_to_gradient_matrix[pixel_x, pixel_y, 1] * front_orthogonal_vectors[pixel_x, pixel_y, 1])
+        data_term = np.abs(orthogonal_to_gradient_matrix[pixel_x, pixel_y, 0] * front_orthogonal_vectors[pixel_x, pixel_y, 0] + orthogonal_to_gradient_matrix[pixel_x, pixel_y, 1] * front_orthogonal_vectors[pixel_x, pixel_y, 1]) + 0.001
     
     
     data_term /= 255
 
-    return confidence, data_term, confidence*(1 + data_term)
+    return confidence, data_term, confidence*data_term
 
 
 def update_confidence(confidence_matrix, target_region_mask, selected_pixel, selected_pixel_confidence, patch_size, image_size):
