@@ -6,27 +6,26 @@ from new_gradient import new_gradient, new_orthogonal_front_vector
 
 
 def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, new_image, front_orthogonal_vectors, orthogonal_to_gradient_matrix):
-    new = True
     # Calcul du terme de confiance
     confidence = 0
     pixel_x, pixel_y = pixel[0], pixel[1]
     half_patch_size = patch_size // 2
+    xmin, xmax = max(pixel_x - half_patch_size, 0), min(pixel_x + half_patch_size + 1, image_size[0] - 1)
+    ymin, ymax = max(pixel_y - half_patch_size, 0), min(pixel_y + half_patch_size + 1, image_size[1] - 1)
     
-    mat = confidence_matrix[max(pixel_x - half_patch_size, 0): min(pixel_x + half_patch_size + 1, image_size[0] - 1), max(pixel_y - half_patch_size, 0) : min(pixel_y + half_patch_size + 1, image_size[1] - 1)]
-    confidence = np.sum(mat)
+    mat = confidence_matrix[xmin:xmax, ymin:ymax]
+    confidence = np.sum(mat) / ((xmax - xmin + 1) * (ymax - ymin + 1))
 
-    confidence /= patch_size*patch_size
     
     # Calcul du terme de données
     
-    if new:
-        gradient = new_gradient(pixel, new_image, target_region_mask)
-        orthogonal_to_gradient = [- gradient[1], gradient[0]]
-        front_orthogonal_vector = new_orthogonal_front_vector(pixel, target_region_mask)
-        data_term = np.abs(orthogonal_to_gradient[0] * front_orthogonal_vector[0] + orthogonal_to_gradient[1] * front_orthogonal_vector[1])
-        #print("data term : ", data_term, " gradient : ", gradient, " orthogonal vector : ", front_orthogonal_vector)
-    else:
-        data_term = np.abs(orthogonal_to_gradient_matrix[pixel_x, pixel_y, 0] * front_orthogonal_vectors[pixel_x, pixel_y, 0] + orthogonal_to_gradient_matrix[pixel_x, pixel_y, 1] * front_orthogonal_vectors[pixel_x, pixel_y, 1])
+    gradient = new_gradient(pixel, new_image, target_region_mask)
+    orthogonal_to_gradient = [- gradient[1], gradient[0]]
+    front_orthogonal_vector = new_orthogonal_front_vector(pixel, target_region_mask)
+    data_term = np.abs(orthogonal_to_gradient[0] * front_orthogonal_vector[0] + orthogonal_to_gradient[1] * front_orthogonal_vector[1])
+    #print("data term : ", data_term, " gradient : ", gradient, " orthogonal vector : ", front_orthogonal_vector)
+
+    #data_term = np.abs(orthogonal_to_gradient_matrix[pixel_x, pixel_y, 0] * front_orthogonal_vectors[pixel_x, pixel_y, 0] + orthogonal_to_gradient_matrix[pixel_x, pixel_y, 1] * front_orthogonal_vectors[pixel_x, pixel_y, 1])
     
     
     data_term /= 255
