@@ -74,13 +74,13 @@ def choose_q(target_region_mask, front, p, p_mask, im, patch_size):
     max_x = min(source_region_mask_size[0]- patch_size,max_x + margin + patch_size)
     min_y = max(0,min_y - margin)
     max_y = min(source_region_mask_size[1]-patch_size,max_y + margin + patch_size)
-    print("min_x, max_x, min_y, max_y:", min_x, max_x, min_y, max_y)
+    #print("min_x, max_x, min_y, max_y:", min_x, max_x, min_y, max_y)
 
     #Extract the source region from the image
     source_region = im[min_x:max_x, min_y:max_y]
     new_source_region_mask = source_region_mask[min_x:max_x, min_y:max_y]
-    print("source_region.shape:", source_region.shape)
-    print("new_source_region_mask.shape:", new_source_region_mask.shape)
+    #print("source_region.shape:", source_region.shape)
+    #print("new_source_region_mask.shape:", new_source_region_mask.shape)
 
     for i in range(min_x,max_x-patch_size):
         for j in range(min_y,max_y-patch_size):
@@ -245,9 +245,9 @@ def patch_search_compatible(target_region_mask, im, patch_size):
         print(f"pixel : {pixel} | confidence : {confidence} | data term : {data_term} | priority : {priority}")
         if target_region_mask[pixel[0],pixel[1]] == np.array([True]):
             patch = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im_size[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im_size[1] - 1)]
-            print("patch_size:",patch_size)
-            print("patch:", patch)
-            print("patch.shape:",patch.shape)
+            #print("patch_size:",patch_size)
+            #print("patch:", patch)
+            #print("patch.shape:",patch.shape)
             patch_mask = target_region_mask[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im_size[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im_size[1] - 1)]
             # on met à False les valeurs de patch_mask qui correspondent à des valeurs de target_region_mask à True
             patch_mask = np.logical_not(patch_mask)
