@@ -4,13 +4,14 @@ from PIL import Image, ImageOps
 from scipy import signal
 
 def region3x3(x, y, img, target_region_mask, maxdepth):
+    
     size_x = img.shape[0]
     size_y = img.shape[1]
+    if x == 0 or y == 0 or x == size_x - 1 or y == size_y - 1:
+        raise(ValueError, "x et y doivent etre strictement entre 0 et size_x - 1 / size_y - 1")
 
-    xmin = int(x - 1 % size_x)
-    xmax = int(x + 1 % size_x)
-    ymin = int(y - 1 % size_y)
-    ymax = int(y + 1 % size_y)
+    xmin, xmax = x - 1, x + 1
+    ymin, ymax = y - 1, y + 1
 
     x_matrix = np.array([[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
     y_matrix = np.array([[1, 0, -1], [1, 0, -1], [1, 0, -1]])
@@ -20,16 +21,14 @@ def region3x3(x, y, img, target_region_mask, maxdepth):
     depth = maxdepth
     while depth > 0 and np.any(local_target_region_mask):
         
-        x = int(x + np.sign(np.sum(x_matrix * local_target_region_mask)))
-        y = int(y + np.sign(np.sum(y_matrix * local_target_region_mask)))
-
         if x == 1 or x == size_x - 2 or y == 1 or y == size_y - 2:
             break
+
+        x = int(x + np.sign(np.sum(x_matrix * local_target_region_mask)))
+        y = int(y + np.sign(np.sum(y_matrix * local_target_region_mask)))
         
-        xmin = int(x - 1 % size_x)
-        xmax = int(x + 1 % size_x)
-        ymin = int(y - 1 % size_y)
-        ymax = int(y + 1 % size_y)
+        xmin, xmax = x - 1, x + 1
+        ymin, ymax = y - 1, y + 1
 
         local_target_region_mask = target_region_mask[xmin:xmax + 1, ymin:ymax + 1]
         depth -= 1
@@ -60,6 +59,7 @@ def new_orthogonal_front_vector(pixel, target_region_mask):
     gradient_core_y = 1/4 * np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
     gradient[0] = np.sum(gradient_core_x * pixel_region)
     gradient[1] = np.sum(gradient_core_y * pixel_region)
+    gradient = gradient / np.sqrt(gradient[0] ** 2 + gradient[1] ** 2)
 
     return gradient
 
