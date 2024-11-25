@@ -58,7 +58,7 @@ def new_gradient(pixel, image, target_region_mask):
     # Matrices de Sobel pour le calcul du gradient en x et en y :
     gradient_core_x = 1/4 * np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]]) 
     gradient_core_y = 1/4 * np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-    # Calcul des valeurs de gradient en x et en y à l'aide des matrices de Sobel sur la région 3x3 trouvée précedemment
+    # Calcul des valeurs de gradient en x et en y à l'aide des matrices de Sobel sur la région 3x3 trouvée précédemment
     gradient[0] = np.sum(gradient_core_x * pixel_region)
     gradient[1] = np.sum(gradient_core_y * pixel_region)
 
@@ -73,7 +73,7 @@ def new_orthogonal_front_vector(pixel, target_region_mask):
     # Matrices de Sobel pour le calcul du gradient en x et en y :
     orthogonal_front_vector_core_x = 1/4 * np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
     orthogonal_front_vector_core_y = 1/4 * np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-    # Calcul des valeurs de gradient en x et en y à l'aide des matrices de Sobel sur la région 3x3 trouvée précedemment
+    # Calcul des valeurs de gradient en x et en y à l'aide des matrices de Sobel sur la région 3x3 trouvée précédemment
     orthogonal_front_vector[0] = np.sum(orthogonal_front_vector_core_x * pixel_region)
     orthogonal_front_vector[1] = np.sum(orthogonal_front_vector_core_y * pixel_region)
     # On normalise le vecteur obtenu en s'assurant de ne pas diviser par 0

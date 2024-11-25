@@ -82,13 +82,13 @@ def pixel_with_max_priority(front_pixels_mask, new_image, original_image, target
     max_data_term = 0.
     max_priority = 0.
 
-    front_pixels_list = list_front_pixels(front_pixels_mask) # Liste des pixels de la frontière créée avec la fonction précedemment définie
+    front_pixels_list = list_front_pixels(front_pixels_mask) # Liste des pixels de la frontière créée avec la fonction précédemment définie
     pixel_max = front_pixels_list[0] # Initialisation arbitraire du pixel de priorité maximale
     for pixel in front_pixels_list: # Boucle sur tous les pixels de la frontière
         # On appelle priority pour récuperer la priorité du pixel courant
         pixel_confidence, pixel_data_term, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, new_image)
         
-        if pixel_priority > max_priority: # On ccompare la priorité calculée précedemment avec la valeur maximum enregistrée jusqu'à maintenant
+        if pixel_priority > max_priority: # On ccompare la priorité calculée précédemment avec la valeur maximum enregistrée jusqu'à maintenant
             # Si la priorité est supérieure, on change les valeurs des variables max_priority, pixel_max, max_confidence et max_data_term avec les informations du pixel courant
             max_priority = pixel_priority
             pixel_max = pixel
