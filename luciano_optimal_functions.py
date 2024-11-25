@@ -43,6 +43,7 @@ def update_confidence(confidence_matrix, target_region_mask, selected_pixel, sel
     confidence_patch = (1 - target_region_mask[xmin:xmax, ymin:ymax]) * confidence_matrix[xmin:xmax, ymin:ymax]
     new_confidence_patch = target_region_mask[xmin:xmax, ymin:ymax] * selected_pixel_confidence + confidence_patch
     new_confidence_matrix[xmin:xmax, ymin:ymax] = new_confidence_patch
+    show_patchs_chosen(selected_pixel, confidence_patch, new_confidence_patch)
     return new_confidence_matrix
 
 def update_target_region_mask(target_region_mask, selected_pixel, patch_size,im):
@@ -147,8 +148,9 @@ def front_detection(im, target_region_mask):
     
 def show_patchs_chosen(pixel, p_patch, q_patch):
     fig, axs = plt.subplots(1, 2)
-    axs[0].imshow(p_patch, cmap='grey', vmin=0, vmax=255)
-    axs[0].set_title(f"patch to replace (pixel = {pixel})")
-    axs[1].imshow(q_patch, cmap='grey', vmin=0, vmax=255)
-    axs[1].set_title("patch chosen")
+    axs[0].imshow(p_patch, cmap='viridis', vmin=0, vmax=1)
+    axs[0].set_title(f"ancien patch de confiance (pixel = {pixel})")
+    axs[1].imshow(q_patch, cmap='viridis', vmin=0, vmax=1)
+    axs[1].set_title("patch de confiance mis à jour")
+    fig.colorbar(plt.cm.ScalarMappable(), ax=axs)
     plt.show()
