@@ -4,6 +4,7 @@ from skimage.util import view_as_windows
 import luciano_final_functions as lf
 import time
 from scipy import signal
+import matplotlib.pyplot as plt
 
 
 def calcul_dist_color(p,q, p_mask):
@@ -123,7 +124,8 @@ def patch_search_compatible(target_region_mask, im, patch_size,margin = 70):
     half_patch_size = patch_size // 2
     confidence_matrix = 1. - np.copy(target_region_mask)
     while target_region_mask.any():
-        Image.fromarray(new_matrix).show()
+        plt.imshow(new_matrix * (1 - target_region_mask))
+        plt.show()
         front = front_detection(new_matrix, target_region_mask,half_patch_size,im_size)
         
         pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, new_matrix, im,target_region_mask, confidence_matrix, im_size, patch_size)

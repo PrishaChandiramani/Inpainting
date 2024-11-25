@@ -4,80 +4,81 @@ from PIL import Image, ImageOps
 from scipy import signal
 
 def region3x3(x, y, img, target_region_mask, maxdepth):
-    
+    # Fonction qui renvoie une zone de 3x3 pixels faisant partie entièrement de la région source et proche du pixel passé en argument
+    # Le paramètre maxdepth permet de s'assurer que la fonction de va pas être bloquée dans une boucle infinie et va bien s'arreter au bout d'un moment
     size_x = img.shape[0]
     size_y = img.shape[1]
-    if x == 0 or y == 0 or x == size_x - 1 or y == size_y - 1:
+    
+    if x == 0 or y == 0 or x == size_x - 1 or y == size_y - 1: # On écarte les pixels au bords pour éviter les erreurs
         return np.zeros((3, 3))
 
+    # Calcul des coordonnées des quatres coins de la région 3x3 considérée
     xmin, xmax = x - 1, x + 1
     ymin, ymax = y - 1, y + 1
 
+    # Matrices en x et en y qui permettent de calculer la direction du décalage à réaliser pour se retrouver dans la région source 
     x_matrix = np.array([[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
     y_matrix = np.array([[1, 0, -1], [1, 0, -1], [1, 0, -1]])
 
-    local_target_region_mask = target_region_mask[xmin:xmax + 1, ymin:ymax + 1]
+    local_target_region_mask = target_region_mask[xmin:xmax + 1, ymin:ymax + 1] # Masque local de la région cible autour du pixel considéré 
 
     depth = maxdepth
-    while depth > 0 and np.any(local_target_region_mask):
+    while depth > 0 and np.any(local_target_region_mask): 
+        # Boucle qui va se répéter jusqu'à ce que la région 3x3 considérée soit compris entièrement dans la région source,
+        # ou que l'on ai dépassé le nombres maximum d'itérations
         
-        if x == 1 or x == size_x - 2 or y == 1 or y == size_y - 2:
+        if x == 1 or x == size_x - 2 or y == 1 or y == size_y - 2: # On écarte les cas où l'on est trop proche du bord, ce qui peux entrainer des erreurs
             break
 
-        x = int(x + np.sign(np.sum(x_matrix * local_target_region_mask)))
-        y = int(y + np.sign(np.sum(y_matrix * local_target_region_mask)))
+        # On calcule le décalage nécessaire en x et en y pour s'éloigner de la région cible 
+        x_offset = np.sign(np.sum(x_matrix * local_target_region_mask))
+        y_offset = np.sign(np.sum(y_matrix * local_target_region_mask))
+        # On met à jour les coordonnées du centre de la région considérée en fonction de ces décalages
+        x += x_offset
+        y += y_offset
         
+        # Mise à jour des coordonées des coins de la région 3x3 considérée
         xmin, xmax = x - 1, x + 1
         ymin, ymax = y - 1, y + 1
 
+        # Mise à jour du masque local de la région cible
         local_target_region_mask = target_region_mask[xmin:xmax + 1, ymin:ymax + 1]
         depth -= 1
 
-    result = img[xmin:xmax + 1, ymin:ymax + 1]
+    result = img[xmin:xmax + 1, ymin:ymax + 1] # Région 3x3 qui contient seulement des pixels de la région source (sauf dans le cas des bords)
     return result
     
 def new_gradient(pixel, image, target_region_mask):
-    gradient = [0. , 0.]
+    # Calcule la valeur du gradient sur une zone "connue" de l'image proche du pixel passé en argument
+    gradient = [0. , 0.] # Initialisation du gradient
     x, y = pixel[0], pixel[1]
 
-    pixel_region = region3x3(x, y, image, target_region_mask, 3)
+    pixel_region = region3x3(x, y, image, target_region_mask, 3) # Recherche de la région "connue" proche du pixel considéré et où l'on peut calculer le gradient 
     
-    gradient_core_x = 1/4 * np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+    # Matrices de Sobel pour le calcul du gradient en x et en y :
+    gradient_core_x = 1/4 * np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]]) 
     gradient_core_y = 1/4 * np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+    # Calcul des valeurs de gradient en x et en y à l'aide des matrices de Sobel sur la région 3x3 trouvée précedemment
     gradient[0] = np.sum(gradient_core_x * pixel_region)
     gradient[1] = np.sum(gradient_core_y * pixel_region)
 
     return gradient
 
 def new_orthogonal_front_vector(pixel, target_region_mask):
-    gradient = [0. , 0.]
+    # Calcul le vecteur normal à la frontière de la région cible au point du pixel passé en argument
+    orthogonal_front_vector = [0. , 0.] # Initialisation du vecteur normal
     x, y = pixel[0], pixel[1]
 
-    pixel_region = region3x3(x, y, target_region_mask, target_region_mask, 0)
-    
-    gradient_core_x = 1/4 * np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
-    gradient_core_y = 1/4 * np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-    gradient[0] = np.sum(gradient_core_x * pixel_region)
-    gradient[1] = np.sum(gradient_core_y * pixel_region)
-    if np.sqrt(gradient[0] ** 2 + gradient[1] ** 2) > 0:
-        gradient = gradient / np.sqrt(gradient[0] ** 2 + gradient[1] ** 2)
-    return gradient
-
-if __name__ == "__main__":
-    
-    test_image = np.zeros((10, 10))
-    test_target_region_mask = np.copy(test_image)
-    for i in range(10):
-        for j in range(10):
-            if i >= j:
-                test_target_region_mask[i, j] = 1.
-
-
-    #print(new_gradient([0, 0], test_image, []))
-    
-   
-    result_test = region3x3(4, 3, test_image, test_target_region_mask)
-    plt.imshow(test_target_region_mask, cmap='grey')
-    plt.show()
+    pixel_region = region3x3(x, y, target_region_mask, target_region_mask, 0) # Région 3x3 sur laquelle on va caluler le gradient (maxdepth = 0 car on ne veut pas se décaler)
+    # Matrices de Sobel pour le calcul du gradient en x et en y :
+    orthogonal_front_vector_core_x = 1/4 * np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+    orthogonal_front_vector_core_y = 1/4 * np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+    # Calcul des valeurs de gradient en x et en y à l'aide des matrices de Sobel sur la région 3x3 trouvée précedemment
+    orthogonal_front_vector[0] = np.sum(orthogonal_front_vector_core_x * pixel_region)
+    orthogonal_front_vector[1] = np.sum(orthogonal_front_vector_core_y * pixel_region)
+    # On normalise le vecteur obtenu en s'assurant de ne pas diviser par 0
+    if np.sqrt(orthogonal_front_vector[0] ** 2 + orthogonal_front_vector[1] ** 2) > 0:
+        orthogonal_front_vector = orthogonal_front_vector / np.sqrt(orthogonal_front_vector[0] ** 2 + orthogonal_front_vector[1] ** 2)
+    return orthogonal_front_vector
 
     

@@ -70,25 +70,26 @@ def front_orthogonal_vectors(target_region_mask):
     return front_orthogonal_vectors
 
 def list_front_pixels(front_pixels_mask):
-    non_null_indices = np.nonzero(front_pixels_mask)
-    non_null_indices_list = [[non_null_indices[0][i], non_null_indices[1][i]] for i in range(len(non_null_indices[0]))]
+    # Renvoie la liste des pixels de la frontière de la région cible
+    non_null_indices = np.nonzero(front_pixels_mask) # Paire de listes d'indices du masque de la frontière de la région cible
+    non_null_indices_list = [[non_null_indices[0][i], non_null_indices[1][i]] for i in range(len(non_null_indices[0]))] # Reconstruction d'une liste de couples de coordonnées
     return non_null_indices_list
 
 
 def pixel_with_max_priority(front_pixels_mask, new_image, original_image, target_region_mask, confidence_matrix, image_size, patch_size):
-    
-    
+    # Renvoie le pixel avec la priorité maximale parmi les pixels de la frontière de la région cible
     max_confidence = 0.
     max_data_term = 0.
     max_priority = 0.
 
-    front_pixels_list = list_front_pixels(front_pixels_mask)
-    #print(f"front pixels list : {front_pixels_list}")
-    pixel_max = front_pixels_list[0]
-    for pixel in front_pixels_list:
+    front_pixels_list = list_front_pixels(front_pixels_mask) # Liste des pixels de la frontière créée avec la fonction précedemment définie
+    pixel_max = front_pixels_list[0] # Initialisation arbitraire du pixel de priorité maximale
+    for pixel in front_pixels_list: # Boucle sur tous les pixels de la frontière
+        # On appelle priority pour récuperer la priorité du pixel courant
         pixel_confidence, pixel_data_term, pixel_priority = priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, new_image)
-        #print(f"-- pixel : {pixel} | confidence : {pixel_confidence} | data term : {pixel_data_term} | priority : {pixel_priority}")
-        if pixel_priority > max_priority:
+        
+        if pixel_priority > max_priority: # On ccompare la priorité calculée précedemment avec la valeur maximum enregistrée jusqu'à maintenant
+            # Si la priorité est supérieure, on change les valeurs des variables max_priority, pixel_max, max_confidence et max_data_term avec les informations du pixel courant
             max_priority = pixel_priority
             pixel_max = pixel
             max_confidence = pixel_confidence
@@ -97,6 +98,7 @@ def pixel_with_max_priority(front_pixels_mask, new_image, original_image, target
     return pixel_max, max_confidence, max_data_term, max_priority
     
 def show_patchs_chosen(pixel, p_patch, q_patch):
+    # Affiche les deux patchs choisis à chaque itération de l'algorithme
     fig, axs = plt.subplots(1, 2)
     axs[0].imshow(p_patch, cmap='grey', vmin=0, vmax=255)
     axs[0].set_title(f"patch to replace (pixel = {pixel})")
