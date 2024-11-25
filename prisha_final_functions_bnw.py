@@ -25,81 +25,12 @@ def calcul_dist(p, q, p_mask):
     sum = np.sum(diff ** 2)
     return sum
 
-def calcul_dist_color(p,q, p_mask):
-   # dans p, il peut y avoir des valeurs à None
-   #p_mask[i,j] = True si il faut prendre la valeur du pixel dans p qu'elle n'est pas vide
-   # si p_mask a que des valeurs à False, on ne fait rien, donc la distance est nulle, c'est à dire que le pixel q est parfait, problème à gérer, est qu'on commence à sum = -1 ?  
 
-    if p.shape != q.shape:
-        raise ValueError("Les deux patchs n'ont pas la même taille")
-    p_masked = p*p_mask[...,np.newaxis]
-    q_masked = q*p_mask[...,np.newaxis]
-    # Cast to float64 to prevent overflow
-    diff = p_masked - q_masked
-    sum = np.sum(diff ** 2, axis=(0,1))
-    return np.sum(sum)
-
-#memory optimization
-def choose_q_memory_optimization(target_region_mask, p,p_mask,im, patch_size):
-    D={}
-    #psi = gray_image_matrix - omega #déterminer comment déterminer psi à partir de omega
-    #print(psi)
-    #psi_image = Image.fromarray(psi)
-    #psi_image.show()
-    #print("psi.shape:",psi.shape)
-    source_region_mask = np.logical_not(target_region_mask)
-    print("source_region_mask.shape:",source_region_mask.shape)
-    for i in range(source_region_mask.shape[0]-patch_size):
-        for j in range(source_region_mask.shape[1]-patch_size):
-            q_mask = source_region_mask[i:i+patch_size,j:j+patch_size]
-            #print("q_mask.shape:",q_mask.shape)
-            valid_patch = True
-            if np.any(1- q_mask):
-                valid_patch = False #on peut mettre un break après pour minimiser le nombre d'itérations
-                if valid_patch:
-                    q = im[i:i+patch_size,j:j+patch_size]
-                    d = calcul_dist(p,q,p_mask)
-                    D[(i,j)]=d
-    #print(D)
-    minimum_D = min(D, key=D.get) # renvoie la clé de la valeur minimale
-    q_opt = im[minimum_D[0]:minimum_D[0]+patch_size,minimum_D[1]:minimum_D[1]+patch_size]
-
-    return q_opt 
-
-def choose_q_original(target_region_mask, front, p, p_mask, im, patch_size):
-    D = {}
-    margin = 20
-    source_region_mask = np.logical_not(target_region_mask)
-    #print("source_region_mask.shape:", source_region_mask.shape)
-
-    # Extract patches from the image and the mask
-    patches = view_as_windows(im, (patch_size, patch_size))
-    mask_patches = view_as_windows(source_region_mask, (patch_size, patch_size))
-    
-    # Flatten the patches for easier processing
-    patches = patches.reshape(-1, patch_size, patch_size)
-    mask_patches = mask_patches.reshape(-1, patch_size, patch_size)
-    
-    # Filter valid patches
-    for idx, mask in enumerate(mask_patches):
-        if np.all(mask):
-            patch = patches[idx]
-            d = calcul_dist(p, patch, p_mask)
-            i, j = np.unravel_index(idx, (source_region_mask.shape[0] - patch_size + 1, source_region_mask.shape[1] - patch_size + 1))
-            D[(i , j )] = d
-    #print(D)
-    # Find the patch with the minimum distance
-    minimum_D = min(D, key=D.get)  # Returns the key of the minimum value
-    q_opt = im[minimum_D[0]:minimum_D[0] + patch_size, minimum_D[1]:minimum_D[1] + patch_size]
-
-    return q_opt
-
-# time optimization
 def choose_q(target_region_mask, front, p, p_mask, im, patch_size):
     D = {}
     margin = 70
     source_region_mask = np.logical_not(target_region_mask)
-    print("source_region_mask.shape:", source_region_mask.shape)
+    #print("source_region_mask.shape:", source_region_mask.shape)
 
     #Define the limits of the target region
     target_indices = np.argwhere(target_region_mask)
@@ -234,7 +165,7 @@ def patch_search_compatible(target_region_mask, im, patch_size):
             #print("patch_mask:",patch_mask)
             q_patch = choose_q(target_region_mask, front, patch,  patch_mask, new_matrix, patch_size)
             #print("q_patch:",q_patch)
-            new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch
+            new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch*(1-patch_mask) + patch*patch_mask
             #new_matrix = update_matrix(q_patch, target_region_mask, pixel, half_patch_size, new_matrix)
             confidence_matrix = lf.update_confidence(confidence_matrix, target_region_mask, pixel, confidence, patch_size, im.shape)
             
