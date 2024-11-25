@@ -6,9 +6,10 @@ import numpy as np
 from skimage.util import view_as_windows
 import luciano_final_functions as lf
 import time
+import matplotlib.pyplot as plt
 
 
-def calcul_dist(p,q, p_mask):
+def calcul_dist(p, q, p_mask):
    # dans p, il peut y avoir des valeurs à None
    #p_mask[i,j] = True si il faut prendre la valeur du pixel dans p qu'elle n'est pas vide
    # si p_mask a que des valeurs à False, on ne fait rien, donc la distance est nulle, c'est à dire que le pixel q est parfait, problème à gérer, est qu'on commence à sum = -1 ?  
@@ -96,7 +97,7 @@ def choose_q_original(target_region_mask, front, p, p_mask, im, patch_size):
 # time optimization
 def choose_q(target_region_mask, front, p, p_mask, im, patch_size):
     D = {}
-    margin = 20
+    margin = 70
     source_region_mask = np.logical_not(target_region_mask)
     print("source_region_mask.shape:", source_region_mask.shape)
 
@@ -106,10 +107,10 @@ def choose_q(target_region_mask, front, p, p_mask, im, patch_size):
     max_x, max_y = target_indices.max(axis=0)
 
     #Define the limits of the source region with a margin
-    min_x = max(0,min_x - margin)
-    max_x = min(source_region_mask.shape[0],max_x + margin + patch_size)
-    min_y = max(0,min_y - margin)
-    max_y = min(source_region_mask.shape[1],max_y + margin + patch_size)
+    min_x = max(patch_size, min_x - margin)
+    max_x = min(source_region_mask.shape[0] - patch_size, max_x + margin + patch_size)
+    min_y = max(patch_size, min_y - margin)
+    max_y = min(source_region_mask.shape[1] - patch_size, max_y + margin + patch_size)
 
     #Extract the source region from the image
     source_region = im[min_x:max_x, min_y:max_y]
@@ -153,22 +154,22 @@ def update_target_region_mask(target_region_mask, selected_pixel, patch_size,im)
 def neighbour_to_source_region(x, y, target_region_mask):
     source_region_mask = 1. - target_region_mask
     number_of_source_region_neighours = 0
-    if x > 0 and x < target_region_mask.shape[0]:
-        if y > 0 and y < target_region_mask.shape[1]:
+    if x > 0 and x < target_region_mask.shape[0] - 1:
+        if y > 0 and y < target_region_mask.shape[1] - 1:
             number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x + 1, y] + source_region_mask[x, y - 1] + source_region_mask[x, y + 1]
         elif y == 0:
             number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x + 1, y] + source_region_mask[x, y + 1]
         else:
             number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x + 1, y] + source_region_mask[x, y - 1]
     elif x == 0:
-        if y > 0 and y < target_region_mask.shape[1]:
+        if y > 0 and y < target_region_mask.shape[1] - 1:
             number_of_source_region_neighours += source_region_mask[x + 1, y] + source_region_mask[x, y - 1] + source_region_mask[x, y + 1]
         elif y == 0:
             number_of_source_region_neighours += source_region_mask[x + 1, y] + source_region_mask[x, y + 1]
         else:
             number_of_source_region_neighours += source_region_mask[x + 1, y] + source_region_mask[x, y - 1]
     else:
-        if y > 0 and y < target_region_mask.shape[1]:
+        if y > 0 and y < target_region_mask.shape[1] - 1:
             number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x, y - 1] + source_region_mask[x, y + 1]
         elif y == 0:
             number_of_source_region_neighours += source_region_mask[x - 1, y] + source_region_mask[x, y + 1]
@@ -178,7 +179,7 @@ def neighbour_to_source_region(x, y, target_region_mask):
 
 
 
-def front_detection(im, target_region_mask):
+def front_detection(im, target_region_mask, half_patch_size):
     # je vois pas comment optimiser celle-ci
     #print("in front_detection")
     if target_region_mask.shape != im.shape:
@@ -188,9 +189,10 @@ def front_detection(im, target_region_mask):
     else : 
         front = np.array([[False for i in range(im.shape[1])] for j in range(im.shape[0])])
         new_im = np.copy(im)
-        for x in range(im.shape[0]):
-            for y in range(im.shape[1]):
+        for x in range(half_patch_size, im.shape[0] - half_patch_size):
+            for y in range(half_patch_size, im.shape[1] - half_patch_size):
                 if target_region_mask[x, y]:
+                    #print("x : ", x, "y : ", y)
                     front[x, y] = neighbour_to_source_region(x, y, target_region_mask)
         return front
     
@@ -213,10 +215,10 @@ def patch_search_compatible(target_region_mask, im, patch_size):
     new_matrix = new_matrix * (1- target_region_mask) + target_region_mask * 255
     half_patch_size = patch_size // 2
     confidence_matrix = 1. - np.copy(target_region_mask)
+    i = 0
     while target_region_mask.any():
         #print("in while loop")
-        
-        front = front_detection(new_matrix, target_region_mask)
+        front = front_detection(new_matrix, target_region_mask, patch_size // 2)
         #lf.show_image(front, 'contour de la target region')
         pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, new_matrix, im,target_region_mask, confidence_matrix, im.shape, patch_size)
         #print(f"pixel : {pixel} | confidence : {confidence} | data term : {data_term} | priority : {priority}")
@@ -242,5 +244,6 @@ def patch_search_compatible(target_region_mask, im, patch_size):
             #print("target_region_mask:",target_region_mask)  
             #new_matrix_image = Image.fromarray(new_matrix)
             #new_matrix_image.show()  
+        i += 1
     new_matrix = new_matrix.astype(np.uint8)        
     return new_matrix

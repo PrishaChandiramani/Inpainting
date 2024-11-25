@@ -8,7 +8,7 @@ def region3x3(x, y, img, target_region_mask, maxdepth):
     size_x = img.shape[0]
     size_y = img.shape[1]
     if x == 0 or y == 0 or x == size_x - 1 or y == size_y - 1:
-        raise(ValueError, "x et y doivent etre strictement entre 0 et size_x - 1 / size_y - 1")
+        return np.zeros((3, 3))
 
     xmin, xmax = x - 1, x + 1
     ymin, ymax = y - 1, y + 1
@@ -59,8 +59,8 @@ def new_orthogonal_front_vector(pixel, target_region_mask):
     gradient_core_y = 1/4 * np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
     gradient[0] = np.sum(gradient_core_x * pixel_region)
     gradient[1] = np.sum(gradient_core_y * pixel_region)
-    gradient = gradient / np.sqrt(gradient[0] ** 2 + gradient[1] ** 2)
-
+    if np.sqrt(gradient[0] ** 2 + gradient[1] ** 2) > 0:
+        gradient = gradient / np.sqrt(gradient[0] ** 2 + gradient[1] ** 2)
     return gradient
 
 if __name__ == "__main__":

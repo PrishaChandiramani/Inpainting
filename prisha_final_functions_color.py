@@ -73,22 +73,22 @@ def neighbour_to_source_region(x, y, target_region_mask):
     source_region_mask = ~target_region_mask
     number_of_source_region_neighours = 0
     target_region_mask_size = target_region_mask.shape
-    if x > 0 and x < target_region_mask_size[0]:
-        if y > 0 and y < target_region_mask_size[1]:
+    if x > 0 and x < target_region_mask_size[0] - 1:
+        if y > 0 and y < target_region_mask_size[1] - 1:
             number_of_source_region_neighours += source_region_mask[x - 1, y,0] + source_region_mask[x + 1, y,0] + source_region_mask[x, y - 1,0] + source_region_mask[x, y + 1,0]
         elif y == 0:
             number_of_source_region_neighours += source_region_mask[x - 1, y,0] + source_region_mask[x + 1, y,0] + source_region_mask[x, y + 1,0]
         else:
             number_of_source_region_neighours += source_region_mask[x - 1, y,0] + source_region_mask[x + 1, y,0] + source_region_mask[x, y - 1,0]
     elif x == 0:
-        if y > 0 and y < target_region_mask_size[1]:
+        if y > 0 and y < target_region_mask_size[1] - 1:
             number_of_source_region_neighours += source_region_mask[x + 1, y,0] + source_region_mask[x, y - 1,0] + source_region_mask[x, y + 1,0]
         elif y == 0:
             number_of_source_region_neighours += source_region_mask[x + 1, y,0] + source_region_mask[x, y + 1,0]
         else:
             number_of_source_region_neighours += source_region_mask[x + 1, y,0] + source_region_mask[x, y - 1,0]
     else:
-        if y > 0 and y < target_region_mask_size[1]:
+        if y > 0 and y < target_region_mask_size[1] - 1:
             number_of_source_region_neighours += source_region_mask[x - 1, y,0] + source_region_mask[x, y - 1,0] + source_region_mask[x, y + 1,0]
         elif y == 0:
             number_of_source_region_neighours += source_region_mask[x - 1, y,0] + source_region_mask[x, y + 1,0]
@@ -123,7 +123,7 @@ def patch_search_compatible(target_region_mask, im, patch_size,margin = 70):
     half_patch_size = patch_size // 2
     confidence_matrix = 1. - np.copy(target_region_mask)
     while target_region_mask.any():
-        
+        Image.fromarray(new_matrix).show()
         front = front_detection(new_matrix, target_region_mask,half_patch_size,im_size)
         
         pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, new_matrix, im,target_region_mask, confidence_matrix, im_size, patch_size)
