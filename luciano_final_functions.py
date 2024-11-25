@@ -10,39 +10,39 @@ def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_siz
     confidence = 0
     pixel_x, pixel_y = pixel[0], pixel[1]
     half_patch_size = patch_size // 2
+
+    # Coordonnées des coins du patch autour du pixel considéré
     xmin, xmax = max(pixel_x - half_patch_size, 0), min(pixel_x + half_patch_size + 1, image_size[0] - 1)
     ymin, ymax = max(pixel_y - half_patch_size, 0), min(pixel_y + half_patch_size + 1, image_size[1] - 1)
     
-    mat = confidence_matrix[xmin:xmax, ymin:ymax]
-    confidence = np.sum(mat) / ((xmax - xmin + 1) * (ymax - ymin + 1))
+    mat = confidence_matrix[xmin:xmax, ymin:ymax] # Matrice de confiance des pixels autour du pixel considéré
+    confidence = np.sum(mat) / ((xmax - xmin + 1) * (ymax - ymin + 1)) # 
 
     
     # Calcul du terme de données
     
-    gradient = new_gradient(pixel, new_image, target_region_mask)
-    orthogonal_to_gradient = [- gradient[1], gradient[0]]
-    front_orthogonal_vector = new_orthogonal_front_vector(pixel, target_region_mask)
+    gradient = new_gradient(pixel, new_image, target_region_mask) # Calcul du gradient au pixel considéré
+    orthogonal_to_gradient = [- gradient[1], gradient[0]] # Calcul du vecteur orthogonal au gradient
+    front_orthogonal_vector = new_orthogonal_front_vector(pixel, target_region_mask) # Calcul du vecteur normal à la frontière
     data_term = np.abs(orthogonal_to_gradient[0] * front_orthogonal_vector[0] + orthogonal_to_gradient[1] * front_orthogonal_vector[1])
-    #print("data term : ", data_term, " gradient : ", gradient, " orthogonal vector : ", front_orthogonal_vector)
-
-    #data_term = np.abs(orthogonal_to_gradient_matrix[pixel_x, pixel_y, 0] * front_orthogonal_vectors[pixel_x, pixel_y, 0] + orthogonal_to_gradient_matrix[pixel_x, pixel_y, 1] * front_orthogonal_vectors[pixel_x, pixel_y, 1])
     
-    
-    data_term /= 255
+    data_term /= 255 # On normalise le terme de données pour avoir une priorité entre 0 et 1
 
     return confidence, data_term, confidence*data_term
 
 
 def update_confidence(confidence_matrix, target_region_mask, selected_pixel, selected_pixel_confidence, patch_size, image_size):
-    new_confidence_matrix = np.copy(confidence_matrix)
+    new_confidence_matrix = np.copy(confidence_matrix) # Copie de l'ancienne matrice
     half_patch_size = patch_size // 2
+    # Calcul des coordonnées du patch autour du pixel choisi
     xmin = max(selected_pixel[0] - half_patch_size, 0)
     xmax = min(selected_pixel[0] + half_patch_size + 1, image_size[0] - 1)
     ymin = max(selected_pixel[1] - half_patch_size, 0)
     ymax = min(selected_pixel[1] + half_patch_size + 1, image_size[1] - 1)
-    confidence_patch = (1 - target_region_mask[xmin:xmax, ymin:ymax]) * confidence_matrix[xmin:xmax, ymin:ymax]
-    new_confidence_patch = target_region_mask[xmin:xmax, ymin:ymax] * selected_pixel_confidence + confidence_patch
-    new_confidence_matrix[xmin:xmax, ymin:ymax] = new_confidence_patch
+    
+    confidence_patch = (1 - target_region_mask[xmin:xmax, ymin:ymax]) * confidence_matrix[xmin:xmax, ymin:ymax] # Anciennes valeurs de confiance sur le patch
+    new_confidence_patch = target_region_mask[xmin:xmax, ymin:ymax] * selected_pixel_confidence + confidence_patch # Ajout des nouvelles valeurs de confiance sur le patch
+    new_confidence_matrix[xmin:xmax, ymin:ymax] = new_confidence_patch # Ajout du nouveau patch sur la nouvelle matrice de confiance
     return new_confidence_matrix
 
 def update_target_region_mask(target_region_mask, selected_pixel, patch_size,im):
