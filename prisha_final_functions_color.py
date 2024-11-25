@@ -127,7 +127,7 @@ def patch_search_compatible(target_region_mask, im, patch_size,margin = 70):
         front = front_detection(new_matrix, target_region_mask,half_patch_size,im_size)
         
         pixel, confidence, data_term, priority = lf.pixel_with_max_priority(front, new_matrix, im,target_region_mask, confidence_matrix, im_size, patch_size)
-        
+        print(f"-- pixel : {pixel} | confidence : {confidence} | data term : {data_term} | priority : {priority}")
         if target_region_mask[pixel[0],pixel[1]] == np.array([True]):
             patch = new_matrix[max(pixel[0] - half_patch_size, 0) : min(pixel[0]+ half_patch_size + 1, im_size[0] - 1), max(pixel[1] - half_patch_size, 0) : min(pixel[1] + half_patch_size + 1, im_size[1] - 1)]
             
@@ -136,9 +136,12 @@ def patch_search_compatible(target_region_mask, im, patch_size,margin = 70):
             patch_mask = np.logical_not(patch_mask)
            
             q_patch = choose_q(target_region_mask, front, patch,  patch_mask, new_matrix, patch_size,margin)
+            lf.show_patchs_chosen(pixel, patch, q_patch)
+
         
             new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im_size[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im_size[1] - 1)] = q_patch*(1-patch_mask) + patch*patch_mask
-          
+            #new_image = Image.fromarray(new_matrix)
+            #new_image.show()
             
             confidence_matrix = lf.update_confidence(confidence_matrix, target_region_mask, pixel, confidence, patch_size, im_size)
             
