@@ -232,7 +232,7 @@ def patch_search_compatible(target_region_mask, im, patch_size):
             #print("patch_mask:",patch_mask)
             q_patch = choose_q(target_region_mask, front, patch,  patch_mask, new_matrix, patch_size)
             #print("q_patch:",q_patch)
-            lf.show_patchs_chosen(pixel, patch, q_patch)
+            #lf.show_patchs_chosen(pixel, patch, q_patch)
             new_matrix [max(pixel[0] - half_patch_size, 0):min(pixel[0]+ half_patch_size + 1, im.shape[0] - 1),max(pixel[1] - half_patch_size, 0):min(pixel[1] + half_patch_size + 1, im.shape[1] - 1)] = q_patch
             #new_matrix = update_matrix(q_patch, target_region_mask, pixel, half_patch_size, new_matrix)
             confidence_matrix = lf.update_confidence(confidence_matrix, target_region_mask, pixel, confidence, patch_size, im.shape)
@@ -241,7 +241,7 @@ def patch_search_compatible(target_region_mask, im, patch_size):
             target_region_mask = update_target_region_mask(target_region_mask, pixel, patch_size,new_matrix)
             
             #print("target_region_mask:",target_region_mask)  
-            #new_matrix_image = Image.fromarray(new_matrix)
-            #new_matrix_image.show()  
+            new_matrix_image = Image.fromarray(new_matrix.astype(np.uint8))
+            new_matrix_image.show()  
     new_matrix = new_matrix.astype(np.uint8)        
     return new_matrix
