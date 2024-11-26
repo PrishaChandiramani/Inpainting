@@ -4,8 +4,17 @@ from PIL import Image, ImageOps
 from scipy import signal
 
 def region3x3(x, y, img, target_region_mask, maxdepth):
-    # Fonction qui renvoie une zone de 3x3 pixels faisant partie entièrement de la région source et proche du pixel passé en argument
-    # Le paramètre maxdepth permet de s'assurer que la fonction de va pas être bloquée dans une boucle infinie et va bien s'arreter au bout d'un moment
+    """ 
+    Renvoie une région de 3x3 pixels entièrement située dans la région source et proche du pixel spécifié, en s'assurant que la zone ne contient pas de pixels de la région cible. La fonction ajuste dynamiquement la position du pixel central de la région 3x3 si elle contient des pixels de la région cible. Un paramètre de profondeur maximale (`maxdepth`) est utilisé pour éviter les boucles infinies. 
+    Arguments: 
+    - x (int) : Coordonnée x (ligne) du pixel central initial. 
+    - y (int) : Coordonnée y (colonne) du pixel central initial. 
+    - img (numpy.ndarray) : Image source à partir de laquelle la région sera extraite. 
+    - target_region_mask (numpy.ndarray) : Masque binaire indiquant la région cible (1 pour les pixels à remplir, 0 pour les autres). 
+    - maxdepth (int) : Nombre maximal d'itérations pour ajuster la position de la région 3x3. 
+    Valeur de retour: 
+    - numpy.ndarray : Région 3x3 extraite contenant uniquement des pixels de la région source. Si le pixel est proche des bords ou si la profondeur maximale est atteinte sans trouver une région source valide, une matrice 3x3 de zéros est renvoyée. 
+    """
     size_x = img.shape[0]
     size_y = img.shape[1]
     
@@ -49,7 +58,15 @@ def region3x3(x, y, img, target_region_mask, maxdepth):
     return result
     
 def new_gradient(pixel, image, target_region_mask):
-    # Calcule la valeur du gradient sur une zone "connue" de l'image proche du pixel passé en argument
+    """ 
+    Calcule le gradient (en x et y) pour une région connue de l'image proche du pixel donné. Cette fonction utilise des matrices de Sobel pour calculer les gradients dans une région 3x3 proche du pixel spécifié. Si le pixel se trouve dans une région cible, une région "connue" proche est recherchée à l'aide de la fonction `region3x3`. 
+    Arguments: 
+    - pixel (tuple ou list de deux entiers) : Coordonnées (x, y) du pixel où le gradient doit être calculé. 
+    - image (numpy.ndarray) : Image utilisée pour calculer le gradient. 
+    - target_region_mask (numpy.ndarray) : Masque binaire indiquant la région cible (1 pour les pixels à remplir, 0 pour les autres). 
+    Valeur de retour: 
+    - list : Liste contenant les deux composantes du gradient [gradient_x, gradient_y]. 
+    """
     gradient = [0. , 0.] # Initialisation du gradient
     x, y = pixel[0], pixel[1]
 
@@ -65,7 +82,15 @@ def new_gradient(pixel, image, target_region_mask):
     return gradient
 
 def new_orthogonal_front_vector(pixel, target_region_mask):
-    # Calcul le vecteur normal à la frontière de la région cible au point du pixel passé en argument
+    """ 
+    Calcule le vecteur normal à la frontière de la région cible au point spécifié par le pixel donné. Cette fonction utilise des matrices de Sobel pour calculer le gradient dans une région 3x3 autour du pixel, et en déduit un vecteur orthogonal à la frontière de la région cible. Le vecteur est ensuite normalisé. 
+    Arguments: 
+    - pixel (tuple ou list de deux entiers) : Coordonnées (x, y) du pixel où le vecteur normal doit être calculé. 
+    - target_region_mask (numpy.ndarray) : Masque binaire indiquant la région cible (1 pour les pixels à remplir, 0 pour les autres). 
+    Valeur de retour: 
+    - list : Liste contenant les composantes du vecteur normal [vecteur_x, vecteur_y], normalisé. 
+    """
+    
     orthogonal_front_vector = [0. , 0.] # Initialisation du vecteur normal
     x, y = pixel[0], pixel[1]
 
