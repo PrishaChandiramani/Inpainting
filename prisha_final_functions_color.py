@@ -6,6 +6,8 @@ import time
 from scipy import signal
 import matplotlib.pyplot as plt
 
+# Partie codée par Prisha
+
 
 def calcul_dist_color(p,q, p_mask):
 

@@ -1,6 +1,8 @@
 import numpy as np
 from PIL import Image
 
+# Partie codée par Prisha
+
 
 def compression(image_matrix,n):
     ns1= image_matrix.shape[0]//n

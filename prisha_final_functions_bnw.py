@@ -1,5 +1,3 @@
-# ATTENTION CE N'EST PAS LA VERSION FINALE !!!!!!!
-
 
 from PIL import Image
 import numpy as np
@@ -8,6 +6,7 @@ import luciano_final_functions as lf
 import time
 import matplotlib.pyplot as plt
 
+# Partie codée par Prisha
 
 def calcul_dist(p, q, p_mask):
     """
