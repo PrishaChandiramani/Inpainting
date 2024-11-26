@@ -46,58 +46,60 @@ def calcul_dist(p, q, p_mask):
 
 
 def choose_q(target_region_mask, front, p, p_mask, im, patch_size):
-    D = {}
-    margin = 70
-    source_region_mask = np.logical_not(target_region_mask)
+    """
+    Choisit le patch q optimal à partir de la région source pour remplir le patch de la région cible considéré.
+
+    Parameters:
+    target_region_mask (numpy.ndarray): Masque de la région cible.
+    front (numpy.ndarray): Masque de la frontière de la région cible.
+    p (numpy.ndarray): Patch de la région cible.
+    p_mask (numpy.ndarray): Masque du patch de la région cible.
+    im (numpy.ndarray): Image source.
+    patch_size (int): Taille du patch.
+
+    Returns:
+    numpy.ndarray: Patch q optimal de la région source. Le patch le plus proche du patch p considéré.
+    """
+    D = {} # Dictionnaire pour stocker les distances entre les patchs
+    margin = 70 # Marge autour de la région cible pour définir la région source
+    source_region_mask = np.logical_not(target_region_mask) # Masque de la région source
+
     
-    #Define the limits of the target region
+    # Definit les limites de la région cible
     target_indices = np.argwhere(target_region_mask)
     min_x, min_y = target_indices.min(axis=0)
     max_x, max_y = target_indices.max(axis=0)
 
-    #Define the limits of the source region with a margin
+    # Definit les limites de la région source autour de la région cible avec une marge
     min_x = max(patch_size, min_x - margin)
     max_x = min(source_region_mask.shape[0] - patch_size, max_x + margin + patch_size)
     min_y = max(patch_size, min_y - margin)
     max_y = min(source_region_mask.shape[1] - patch_size, max_y + margin + patch_size)
 
-    #Extract the source region from the image
+    # Extrait la région source de l'image
     source_region = im[min_x:max_x, min_y:max_y]
     source_region_mask = source_region_mask[min_x:max_x, min_y:max_y]
 
-    # Extract patches from the image and the mask
-    patches = view_as_windows(source_region, (patch_size, patch_size))
-    mask_patches = view_as_windows(source_region_mask, (patch_size, patch_size))
     
-    # Flatten the patches for easier processing
-    patches = patches.reshape(-1, patch_size, patch_size)
-    mask_patches = mask_patches.reshape(-1, patch_size, patch_size)
-    
-    # Filter valid patches
-    for idx, mask in enumerate(mask_patches):
-        if np.all(mask):
-            patch = patches[idx]
-            d = calcul_dist(p, patch, p_mask)
-            i, j = np.unravel_index(idx, (source_region_mask.shape[0] - patch_size + 1, source_region_mask.shape[1] - patch_size + 1))
-            D[(i + min_x, j + min_y)] = d
 
-    """
+    
     # Parcourir les patchs possibles dans la région source
     for i in range(min_x,max_x-patch_size):
         for j in range(min_y,max_y-patch_size):
             q_mask = source_region_mask[i:i+patch_size,j:j+patch_size]
-            valid_patch = np.all(q_mask)
+            valid_patch = np.all(q_mask) # Vérifie si le patch est entièrement dans la région source
             if valid_patch:
-                q = im[i:i+patch_size,j:j+patch_size]
-                d = calcul_dist(p, q, p_mask)
+                q = im[i:i+patch_size,j:j+patch_size] # Extrait le patch q
+                d = calcul_dist(p, q, p_mask) # Calcule la distance entre le patch p et le patch q
                 D[(i,j)] = d
-    """
     
     
-    # Find the patch with the minimum distance
-    minimum_D = min(D, key=D.get)  # Returns the key of the minimum value
-    q_opt = im[minimum_D[0]:minimum_D[0] + patch_size, minimum_D[1]:minimum_D[1] + patch_size]
+    
+    # Trouver le patch avec la distance minimale
+    minimum_D = min(D, key=D.get)  # Renvoie la position du pixel dont le patch centré en ce pixel et le plus proche du patch considéré
+    q_opt = im[minimum_D[0]:minimum_D[0] + patch_size, minimum_D[1]:minimum_D[1] + patch_size]  # Extrait le patch q optimal
 
+    # Retourne le patch q optimal
     return q_opt
 
 
