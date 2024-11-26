@@ -4,6 +4,8 @@ from PIL import Image, ImageOps
 from scipy import signal
 from new_gradient_final import new_gradient, new_orthogonal_front_vector
 
+# Partie codée par Luciano
+
 
 def priority(pixel, target_region_mask, confidence_matrix, patch_size, image_size, new_image):
     """ 

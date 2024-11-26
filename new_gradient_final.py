@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
 from scipy import signal
 
+# Partie codée par Luciano
+
 def region3x3(x, y, img, target_region_mask, maxdepth):
     """ 
     Renvoie une région de 3x3 pixels entièrement située dans la région source et proche du pixel spécifié, en s'assurant que la zone ne contient pas de pixels de la région cible. La fonction ajuste dynamiquement la position du pixel central de la région 3x3 si elle contient des pixels de la région cible. Un paramètre de profondeur maximale (`maxdepth`) est utilisé pour éviter les boucles infinies. 
